@@ -15,7 +15,7 @@ export function ShoeBrandsExplorer({ data }: { data: ShoeBrandRecord[] }) {
   const tableRef = useRef<ShoeBrandsTableHandle>(null);
 
   return (
-    <div>
+    <div className="animate-rise">
       <div className="mb-4 flex items-center justify-end gap-2">
         <ExportCsvButton
           filename="shoe-brands.csv"

@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { ContentLoader } from "@/components/layout/content-loader";
 import { CreateAdminDialog } from "@/features/team/create-admin-dialog";
 import { AdminsTable } from "@/features/team/admins-table";
 
@@ -12,7 +14,9 @@ export default function Page() {
         subtitle="Manage login access for the internal Sollo team"
         controls={<CreateAdminDialog />}
       />
-      <AdminsTable />
+      <Suspense fallback={<ContentLoader />}>
+        <AdminsTable />
+      </Suspense>
     </div>
   );
 }

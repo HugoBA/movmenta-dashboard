@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Panel } from "@/components/layout/panel";
+import { ContentLoader } from "@/components/layout/content-loader";
 import { getSession } from "@/lib/auth/session";
 import { safeListTests, type TestRecord } from "@/lib/xano/tests";
 import { safeListShoeBrands, type ShoeBrandRecord } from "@/lib/xano/shoe-brands";
@@ -17,6 +19,23 @@ export default async function Page({
   searchParams: Promise<{ testId?: string }>;
 }) {
   const { testId } = await searchParams;
+
+  return (
+    <div>
+      <PageHeader
+        eyebrow="ADMIN CONSOLE / TESTS"
+        eyebrowTone="cyan"
+        title="Tests"
+        subtitle="Manage shoe-test phases and their assigned shoes"
+      />
+      <Suspense fallback={<ContentLoader />}>
+        <TestsContent testId={testId} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function TestsContent({ testId }: { testId?: string }) {
   const session = await getSession();
 
   const [
@@ -50,12 +69,9 @@ export default async function Page({
 
   if (error) {
     return (
-      <div>
-        <PageHeader eyebrow="ADMIN CONSOLE / TESTS" eyebrowTone="cyan" title="Tests" />
-        <Panel title="Tests">
-          <p className="text-sm text-destructive">Couldn&apos;t load tests from Xano: {error}</p>
-        </Panel>
-      </div>
+      <Panel title="Tests">
+        <p className="text-sm text-destructive">Couldn&apos;t load tests from Xano: {error}</p>
+      </Panel>
     );
   }
 
@@ -64,14 +80,11 @@ export default async function Page({
 
     if (!test) {
       return (
-        <div>
-          <PageHeader eyebrow="ADMIN CONSOLE / TESTS" eyebrowTone="cyan" title="Test not found" />
-          <Panel title="Test not found">
-            <p className="text-sm text-text-faint">
-              No test with id {testId}. It may have been deleted.
-            </p>
-          </Panel>
-        </div>
+        <Panel title="Test not found">
+          <p className="text-sm text-text-faint">
+            No test with id {testId}. It may have been deleted.
+          </p>
+        </Panel>
       );
     }
 
@@ -88,17 +101,14 @@ export default async function Page({
     const availableShoes = shoes.filter((shoe) => !assignedShoeIds.has(shoe.id));
 
     return (
-      <div>
-        <PageHeader eyebrow="ADMIN CONSOLE / TESTS" eyebrowTone="cyan" title={test.name} />
-        <TestDetail
-          test={test}
-          brands={brands}
-          assignedShoes={assignedShoes}
-          availableShoes={availableShoes}
-          sensorRefs={sensorRefs}
-          modelNames={modelNames}
-        />
-      </div>
+      <TestDetail
+        test={test}
+        brands={brands}
+        assignedShoes={assignedShoes}
+        availableShoes={availableShoes}
+        sensorRefs={sensorRefs}
+        modelNames={modelNames}
+      />
     );
   }
 
@@ -107,15 +117,5 @@ export default async function Page({
     shoeCounts[row.test_id] = (shoeCounts[row.test_id] ?? 0) + 1;
   }
 
-  return (
-    <div>
-      <PageHeader
-        eyebrow="ADMIN CONSOLE / TESTS"
-        eyebrowTone="cyan"
-        title="Tests"
-        subtitle="Manage shoe-test phases and their assigned shoes"
-      />
-      <TestsExplorer data={tests} brands={brands} shoeCounts={shoeCounts} />
-    </div>
-  );
+  return <TestsExplorer data={tests} brands={brands} shoeCounts={shoeCounts} />;
 }

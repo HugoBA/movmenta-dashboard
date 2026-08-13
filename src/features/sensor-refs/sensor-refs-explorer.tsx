@@ -15,7 +15,7 @@ export function SensorRefsExplorer({ data }: { data: SensorRefRecord[] }) {
   const tableRef = useRef<SensorRefsTableHandle>(null);
 
   return (
-    <div>
+    <div className="animate-rise">
       <div className="mb-4 flex items-center justify-end gap-2">
         <ExportCsvButton
           filename="sensor-refs.csv"

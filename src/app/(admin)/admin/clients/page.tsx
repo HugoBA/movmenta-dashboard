@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
+import { ContentLoader } from "@/components/layout/content-loader";
 import { CreateBrandDialog } from "@/features/clients/create-brand-dialog";
 import { BrandsTable } from "@/features/clients/brands-table";
 
@@ -12,7 +14,9 @@ export default function Page() {
         subtitle="Manage the login each brand uses to access their dashboard"
         controls={<CreateBrandDialog />}
       />
-      <BrandsTable />
+      <Suspense fallback={<ContentLoader />}>
+        <BrandsTable />
+      </Suspense>
     </div>
   );
 }

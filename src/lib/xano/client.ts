@@ -24,7 +24,13 @@ export async function xanoFetch<T>(
     throw new Error("NEXT_PUBLIC_XANO_BASE_URL is not set");
   }
 
+  const isRead = (init.method ?? "GET") === "GET";
+
   const res = await fetch(`${XANO_BASE_URL}${path}`, {
+    // Reads are cached in Next's data cache; mutations always hit Xano.
+    // Server actions call revalidatePath after writes to keep this fresh —
+    // see e.g. features/tests/actions.ts.
+    ...(isRead ? { cache: "force-cache" as const } : {}),
     ...init,
     headers: {
       "Content-Type": "application/json",

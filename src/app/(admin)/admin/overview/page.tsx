@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Panel } from "@/components/layout/panel";
+import { ContentLoader } from "@/components/layout/content-loader";
 import { getSession } from "@/lib/auth/session";
 import { safeListTests, type TestRecord } from "@/lib/xano/tests";
 import { safeListTestShoes, type TestShoeRecord } from "@/lib/xano/test-shoe";
@@ -10,7 +12,18 @@ import type { ResultRecord } from "@/lib/xano/results";
 import { safeListDashboardUsers, type DashboardUserRecord } from "@/lib/xano/dashboard-user";
 import { OverviewView } from "@/features/overview/overview-view";
 
-export default async function Page() {
+export default function Page() {
+  return (
+    <div>
+      <PageHeader eyebrow="ADMIN CONSOLE" eyebrowTone="cyan" title="Platform overview" />
+      <Suspense fallback={<ContentLoader />}>
+        <OverviewContent />
+      </Suspense>
+    </div>
+  );
+}
+
+async function OverviewContent() {
   const session = await getSession();
 
   const [
@@ -42,12 +55,9 @@ export default async function Page() {
 
   if (error) {
     return (
-      <div>
-        <PageHeader eyebrow="ADMIN CONSOLE" eyebrowTone="cyan" title="Platform overview" />
-        <Panel title="Platform overview">
-          <p className="text-sm text-destructive">Couldn&apos;t load data from Xano: {error}</p>
-        </Panel>
-      </div>
+      <Panel title="Platform overview">
+        <p className="text-sm text-destructive">Couldn&apos;t load data from Xano: {error}</p>
+      </Panel>
     );
   }
 

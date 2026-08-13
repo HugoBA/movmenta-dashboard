@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Panel } from "@/components/layout/panel";
+import { ContentLoader } from "@/components/layout/content-loader";
 import { getSession } from "@/lib/auth/session";
 import { safeListUserProfiles, type UserProfileRecord } from "@/lib/xano/user-profiles";
 import { safeListResults } from "@/lib/xano/results";
@@ -19,6 +21,18 @@ export default async function Page({
   searchParams: Promise<{ nfcId?: string }>;
 }) {
   const { nfcId } = await searchParams;
+
+  return (
+    <div>
+      {!nfcId && <PageHeader eyebrow="ADMIN CONSOLE / USERS" eyebrowTone="cyan" title="User" />}
+      <Suspense fallback={<ContentLoader />}>
+        <UserContent nfcId={nfcId} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function UserContent({ nfcId }: { nfcId?: string }) {
   const session = await getSession();
 
   if (!nfcId) {
@@ -30,12 +44,7 @@ export default async function Page({
       .filter((p) => p.id_nfc)
       .map((p) => ({ idNfc: p.id_nfc, firstName: p.firstName, lastName: p.lastName, email: p.email }));
 
-    return (
-      <div>
-        <PageHeader eyebrow="ADMIN CONSOLE / USERS" eyebrowTone="cyan" title="User" />
-        <UserProfileEmptyState profiles={searchableProfiles} error={error} />
-      </div>
-    );
+    return <UserProfileEmptyState profiles={searchableProfiles} error={error} />;
   }
 
   // Three independent Xano reads (profile, results, shoe) joined client-side

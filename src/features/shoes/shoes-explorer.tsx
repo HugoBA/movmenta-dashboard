@@ -32,7 +32,7 @@ export function ShoesExplorer({
   }, [data, gender, debouncedIdNfc]);
 
   return (
-    <div>
+    <div className="animate-rise">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
         <ShoesFilters
           gender={gender}

@@ -12,7 +12,7 @@ export function ShoeModelsExplorer({ data }: { data: ShoeModelRecord[] }) {
   const tableRef = useRef<ShoeModelsTableHandle>(null);
 
   return (
-    <div>
+    <div className="animate-rise">
       <div className="mb-4 flex items-center justify-end gap-2">
         <ExportCsvButton
           filename="shoe-models.csv"

@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Panel } from "@/components/layout/panel";
+import { ContentLoader } from "@/components/layout/content-loader";
 import { getSession } from "@/lib/auth/session";
 import { safeListTests, type TestRecord } from "@/lib/xano/tests";
 import { safeListShoeBrands, type ShoeBrandRecord } from "@/lib/xano/shoe-brands";
@@ -16,6 +18,20 @@ export default async function Page({
   searchParams: Promise<{ testId?: string }>;
 }) {
   const { testId } = await searchParams;
+
+  return (
+    <div>
+      {!testId && (
+        <PageHeader eyebrow="ADMIN CONSOLE / TEST RESULTS" eyebrowTone="cyan" title="Test results" />
+      )}
+      <Suspense fallback={<ContentLoader />}>
+        <TestResultsContent testId={testId} />
+      </Suspense>
+    </div>
+  );
+}
+
+async function TestResultsContent({ testId }: { testId?: string }) {
   const session = await getSession();
 
   const [
@@ -50,12 +66,7 @@ export default async function Page({
       brandName: brandNameById.get(test.brand_id) ?? "—",
     }));
 
-    return (
-      <div>
-        <PageHeader eyebrow="ADMIN CONSOLE / TEST RESULTS" eyebrowTone="cyan" title="Test results" />
-        <TestResultsEmptyState tests={searchableTests} error={error} />
-      </div>
-    );
+    return <TestResultsEmptyState tests={searchableTests} error={error} />;
   }
 
   if (error) {

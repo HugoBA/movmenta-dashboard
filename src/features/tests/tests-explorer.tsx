@@ -22,7 +22,7 @@ export function TestsExplorer({
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   return (
-    <div>
+    <div className="animate-rise">
       <div className="mb-4 flex items-center justify-end gap-2">
         {selectedIds.size > 0 && (
           <DeleteRowsDialog
