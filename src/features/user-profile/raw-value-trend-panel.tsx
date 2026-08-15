@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Panel } from "@/components/layout/panel";
 import { Switch } from "@/components/ui/switch";
 import { TrendLineChart } from "@/components/charts/trend-line-chart";
+import { categorical } from "@/components/charts/palette";
 import { formatDate, formatShortDate } from "@/lib/formatting/date";
 import { cn } from "@/lib/utils";
 import type { ResultRecord } from "@/lib/xano/results";
@@ -35,7 +36,7 @@ export function RawValueTrendPanel({ chronological }: { chronological: ResultRec
           categories={chronological.map((row) => formatShortDate(row.created_at))}
           values={chronological.map((row) => (showPercent ? row.percent : row.value))}
           unit={showPercent ? "%" : ""}
-          color="#ff6a3d"
+          color={categorical[1]}
         />
       ) : (
         <p className="py-10 text-center text-[13px] text-text-faint">

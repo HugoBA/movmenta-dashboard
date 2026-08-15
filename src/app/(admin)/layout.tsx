@@ -106,7 +106,7 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AppSidebar
         variant="admin"
         groups={navGroups}

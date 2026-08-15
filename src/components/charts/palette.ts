@@ -3,7 +3,7 @@
 // once confirmed; keep the same slot order (it's the CVD-safety mechanism).
 export const categorical = [
   "#3987e5", // 1 blue
-  "#d95926", // 2 orange
+  "#ff2f00", // 2 orange
   "#199e70", // 3 aqua
   "#c98500", // 4 yellow
   "#d55181", // 5 magenta

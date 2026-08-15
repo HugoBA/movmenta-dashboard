@@ -1,11 +1,10 @@
-import { PageHeader } from "@/components/layout/page-header";
 import { Panel } from "@/components/layout/panel";
+import { categorical } from "@/components/charts/palette";
 import { TableLink } from "@/components/layout/table-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatTile } from "@/components/charts/stat-tile";
 import { TrendLineChart } from "@/components/charts/trend-line-chart";
 import { RankedBarChart } from "@/components/charts/ranked-bar-chart";
-import { formatDate } from "@/lib/formatting/date";
 import type { TestRecord } from "@/lib/xano/tests";
 import type { TestShoeRecord } from "@/lib/xano/test-shoe";
 import type { ShoeRecord } from "@/lib/xano/shoes";
@@ -20,7 +19,6 @@ import {
 } from "./compute";
 
 const MAX_TESTS = 6;
-const MAX_BRANDS = 5;
 
 export function OverviewView({
   tests,
@@ -41,31 +39,21 @@ export function OverviewView({
   const dailyScans = computeDailyScans(results);
   const testSummaries = summarizeTests(tests, testShoes, shoes, brands).slice(0, MAX_TESTS);
   const topTesters = topTestersByKm(shoes, results);
-  const recentBrands = [...brandAccounts]
-    .sort((a, b) => b.created_at - a.created_at)
-    .slice(0, MAX_BRANDS);
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        eyebrow="ADMIN CONSOLE"
-        eyebrowTone="cyan"
-        title="Platform overview"
-        subtitle={`${stats.testsCount} test${stats.testsCount === 1 ? "" : "s"} · ${shoes.length} shoes tracked · ${stats.brandAccountsCount} brand accounts`}
-      />
-
-      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
-        <StatTile label="Active tests" value={String(stats.testsCount)} index={0} />
-        <StatTile label="Shoes assigned" value={String(stats.shoesAssignedCount)} index={1} />
-        <StatTile label="Scans — last 30 days" value={String(stats.scansLast30d)} index={2} />
-        <StatTile label="Active testers — last 30 days" value={String(stats.activeTestersLast30d)} index={3} />
-        <StatTile label="Brand accounts" value={String(stats.brandAccountsCount)} index={4} />
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
+        <StatTile label="Shoes tracked" value={String(shoes.length)} index={0} />
+        <StatTile label="Scans — last 30 days" value={String(stats.scansLast30d)} index={1} />
+        <StatTile label="Active testers — last 30 days" value={String(stats.activeTestersLast30d)} index={2} />
+        <StatTile label="Active tests" value={String(stats.testsCount)} index={3} />
       </div>
 
       <Panel title="Scan activity" subtitle="Scans recorded per day, last 30 days">
         <TrendLineChart
           categories={dailyScans.map((point) => point.label)}
           values={dailyScans.map((point) => point.count)}
+          color={categorical[1]}
         />
       </Panel>
 
@@ -118,40 +106,6 @@ export function OverviewView({
           )}
         </Panel>
       </div>
-
-      <Panel title="Recent brand accounts" subtitle="Most recently created">
-        {recentBrands.length === 0 ? (
-          <p className="py-10 text-center text-sm text-text-faint">No brand account yet.</p>
-        ) : (
-          <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Brand</TableHead>
-                  <TableHead>Account</TableHead>
-                  <TableHead className="text-right">Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentBrands.map((brand) => (
-                  <TableRow key={brand.id}>
-                    <TableCell className="font-semibold">
-                      {brand.organization_name || brand.username}
-                    </TableCell>
-                    <TableCell className="text-text-faint">{brand.username}</TableCell>
-                    <TableCell className="text-right text-text-faint">
-                      {formatDate(brand.created_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <TableLink href="/admin/clients" tooltip="Manage brand accounts">
-              <span className="mt-3 inline-block text-xs">View all brands →</span>
-            </TableLink>
-          </>
-        )}
-      </Panel>
     </div>
   );
 }

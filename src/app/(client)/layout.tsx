@@ -46,7 +46,7 @@ export default async function ClientLayout({
   const displayName = session.user.organizationName ?? session.user.username;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <AppSidebar
         variant="client"
         groups={navGroups}
