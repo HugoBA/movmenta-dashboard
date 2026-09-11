@@ -19,6 +19,17 @@ export interface ResultRecord {
   phone_brand: string;
   bol_test: number;
   profile_email: string | null;
+  // GPS/elevation, synced from Strava via the mobile app — only populated
+  // on "Post" rows, and only once that sync integration is live. `temp`
+  // above is NOT ambient temperature (confirmed) — these are separate.
+  activity_source?: string | null;
+  start_date?: number | null;
+  start_lat?: number | null;
+  start_lng?: number | null;
+  end_lat?: number | null;
+  end_lng?: number | null;
+  polyline?: string | null;
+  elevation_profile?: { distance_km: number; elevation_m: number }[] | null;
 }
 
 export interface ResultsFilters {
@@ -58,4 +69,31 @@ export async function safeListResults(
 // dashboard_user's delete endpoint was set up before this will work.
 export async function deleteResult(token: string, id: number) {
   return xanoFetch<null>(`/admin/result/${id}`, { method: "DELETE", token });
+}
+
+// Enterprise-account equivalent — /client prefix, scoped to the caller's
+// org server-side from the token.
+export async function listClientResults(token: string, filters: ResultsFilters) {
+  const params = new URLSearchParams();
+  if (filters.from) params.set("from", String(filters.from));
+  if (filters.to) params.set("to", String(filters.to));
+  if (filters.platform) params.set("platform", filters.platform);
+  if (filters.idNfc) params.set("idNfc", filters.idNfc);
+
+  const qs = params.toString();
+  return xanoFetch<ResultRecord[]>(`/client/result${qs ? `?${qs}` : ""}`, { token });
+}
+
+export async function safeListClientResults(
+  token: string,
+  filters: ResultsFilters,
+): Promise<{ results: ResultRecord[]; error: string | null }> {
+  try {
+    return { results: await listClientResults(token, filters), error: null };
+  } catch (err) {
+    return {
+      results: [],
+      error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error.",
+    };
+  }
 }

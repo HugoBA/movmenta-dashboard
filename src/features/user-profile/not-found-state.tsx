@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { UserRoundX } from "lucide-react";
 
-export function UserProfileNotFoundState({ nfcId }: { nfcId: string }) {
+export function UserProfileNotFoundState({
+  nfcId,
+  basePath = "/admin",
+}: {
+  nfcId: string;
+  basePath?: string;
+}) {
   return (
     <div className="flex flex-col items-center px-5 py-28 text-center text-text-faint">
       <UserRoundX className="mb-4 size-9 opacity-50" />
@@ -14,14 +20,16 @@ export function UserProfileNotFoundState({ nfcId }: { nfcId: string }) {
         could be a lab test sensor, or a profile that hasn&apos;t been registered yet.
       </p>
       <div className="mt-4 flex gap-2">
+        {basePath === "/admin" && (
+          <Link
+            href={`/admin/raw-data?idNfc=${encodeURIComponent(nfcId)}`}
+            className="rounded-[10px] border border-border bg-card px-3.5 py-2 text-[12px] text-muted-foreground transition-colors hover:border-white/16 hover:text-foreground"
+          >
+            View raw results →
+          </Link>
+        )}
         <Link
-          href={`/admin/raw-data?idNfc=${encodeURIComponent(nfcId)}`}
-          className="rounded-[10px] border border-border bg-card px-3.5 py-2 text-[12px] text-muted-foreground transition-colors hover:border-white/16 hover:text-foreground"
-        >
-          View raw results →
-        </Link>
-        <Link
-          href="/admin/user-profiles"
+          href={`${basePath}/user`}
           className="rounded-[10px] border border-border bg-card px-3.5 py-2 text-[12px] text-muted-foreground transition-colors hover:border-white/16 hover:text-foreground"
         >
           View user profiles →

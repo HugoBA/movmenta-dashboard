@@ -7,7 +7,7 @@ export function ErrorsPanel() {
   return (
     <Panel
       title="Reported errors"
-      subtitle="Blabla"
+      subtitle="Sensor or app issues flagged by this tester"
     >
       <div className="flex flex-col items-center gap-2 py-6 text-center text-text-faint">
         <CircleCheck className="size-6 text-brand-good/70" />

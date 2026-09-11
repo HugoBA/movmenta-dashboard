@@ -5,12 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatTile } from "@/components/charts/stat-tile";
 import { TrendLineChart } from "@/components/charts/trend-line-chart";
 import { RankedBarChart } from "@/components/charts/ranked-bar-chart";
+import { ScatterTrendChart } from "@/components/charts/scatter-trend-chart";
 import type { TestRecord } from "@/lib/xano/tests";
 import type { TestShoeRecord } from "@/lib/xano/test-shoe";
 import type { ShoeRecord } from "@/lib/xano/shoes";
 import type { ShoeBrandRecord } from "@/lib/xano/shoe-brands";
 import type { ResultRecord } from "@/lib/xano/results";
 import type { DashboardUserRecord } from "@/lib/xano/dashboard-user";
+import type { WeightWearPoint } from "@/features/test-results/compute";
 import {
   computeDailyScans,
   computeOverviewStats,
@@ -27,6 +29,8 @@ export function OverviewView({
   brands,
   results,
   brandAccounts,
+  basePath = "/admin",
+  weightWearPoints,
 }: {
   tests: TestRecord[];
   testShoes: TestShoeRecord[];
@@ -34,6 +38,10 @@ export function OverviewView({
   brands: ShoeBrandRecord[];
   results: ResultRecord[];
   brandAccounts: DashboardUserRecord[];
+  basePath?: string;
+  // Simulation-only insight (see computeWeightWearPoints) — omitted entirely
+  // when the caller has no way to compute it, e.g. real admin data today.
+  weightWearPoints?: WeightWearPoint[];
 }) {
   const stats = computeOverviewStats(tests, testShoes, results, brandAccounts.length);
   const dailyScans = computeDailyScans(results);
@@ -76,7 +84,7 @@ export function OverviewView({
                   {testSummaries.map((test) => (
                     <TableRow key={test.id}>
                       <TableCell>
-                        <TableLink href={`/admin/test-results?testId=${test.id}`}>
+                        <TableLink href={`${basePath}/test-results?testId=${test.id}`}>
                           <span className="font-semibold">{test.name}</span>
                         </TableLink>
                       </TableCell>
@@ -87,24 +95,54 @@ export function OverviewView({
                   ))}
                 </TableBody>
               </Table>
-              <TableLink href="/admin/tests" tooltip="Manage tests">
+              <TableLink href={`${basePath}/tests`} tooltip="Manage tests">
                 <span className="mt-3 inline-block text-xs">View all tests →</span>
               </TableLink>
             </>
           )}
         </Panel>
 
-        <Panel title="Top testers" subtitle="Total distance covered, all-time">
-          {topTesters.length === 0 ? (
-            <p className="py-10 text-center text-sm text-text-faint">No distance logged yet.</p>
-          ) : (
-            <RankedBarChart
-              categories={topTesters.map((tester) => tester.label)}
-              values={topTesters.map((tester) => Math.round(tester.km))}
-              unit=" km"
+        {weightWearPoints && weightWearPoints.length > 0 ? (
+          <Panel
+            title="Bodyweight vs cushioning-loss rate"
+            subtitle="Condition lost per 100km, across every active test — simulated correlation"
+          >
+            <ScatterTrendChart
+              xLabel="Bodyweight"
+              xUnit=" kg"
+              yLabel="Wear rate"
+              yUnit="%/100km"
+              groups={[
+                {
+                  key: "Male",
+                  color: categorical[0],
+                  points: weightWearPoints
+                    .filter((p) => p.gender === "Male")
+                    .map((p) => ({ x: p.weight, y: p.wearRatePer100km, label: p.label })),
+                },
+                {
+                  key: "Female",
+                  color: categorical[4],
+                  points: weightWearPoints
+                    .filter((p) => p.gender === "Female")
+                    .map((p) => ({ x: p.weight, y: p.wearRatePer100km, label: p.label })),
+                },
+              ].filter((group) => group.points.length > 0)}
             />
-          )}
-        </Panel>
+          </Panel>
+        ) : (
+          <Panel title="Top testers" subtitle="Total distance covered, all-time">
+            {topTesters.length === 0 ? (
+              <p className="py-10 text-center text-sm text-text-faint">No distance logged yet.</p>
+            ) : (
+              <RankedBarChart
+                categories={topTesters.map((tester) => tester.label)}
+                values={topTesters.map((tester) => Math.round(tester.km))}
+                unit=" km"
+              />
+            )}
+          </Panel>
+        )}
       </div>
     </div>
   );

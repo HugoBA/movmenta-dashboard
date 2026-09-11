@@ -18,6 +18,8 @@ export function TestDetail({
   availableShoes,
   sensorRefs,
   modelNames,
+  basePath = "/admin",
+  isAdmin = true,
 }: {
   test: TestRecord;
   brands: ShoeBrandRecord[];
@@ -25,13 +27,15 @@ export function TestDetail({
   availableShoes: ShoeRecord[];
   sensorRefs: SensorRefRecord[];
   modelNames: string[];
+  basePath?: string;
+  isAdmin?: boolean;
 }) {
   const brandName = brands.find((brand) => brand.id === test.brand_id)?.brand_name ?? "—";
 
   return (
     <div className="space-y-6">
       <Link
-        href="/admin/tests"
+        href={`${basePath}/tests`}
         className="inline-flex items-center gap-1.5 text-sm text-text-faint hover:text-foreground"
       >
         <ArrowLeft className="size-3.5" />
@@ -43,22 +47,24 @@ export function TestDetail({
         subtitle={`${brandName} — created ${formatDate(test.created_at)}`}
         right={
           <div className="flex items-center gap-2">
-            <Link href={`/admin/test-results?testId=${test.id}`}>
+            <Link href={`${basePath}/test-results?testId=${test.id}`}>
               <Button type="button" variant="outline">
                 <LineChart />
                 View results
               </Button>
             </Link>
-            <TestFormDialog
-              test={test}
-              brands={brands}
-              trigger={
-                <Button type="button" variant="outline">
-                  <Pencil />
-                  Edit
-                </Button>
-              }
-            />
+            {isAdmin && (
+              <TestFormDialog
+                test={test}
+                brands={brands}
+                trigger={
+                  <Button type="button" variant="outline">
+                    <Pencil />
+                    Edit
+                  </Button>
+                }
+              />
+            )}
           </div>
         }
       >
@@ -71,10 +77,19 @@ export function TestDetail({
         title="Assigned shoes"
         subtitle="Find and add shoes to this test by NFC id, name or email"
         right={
-          <AddShoesDialog testId={test.id} availableShoes={availableShoes} sensorRefs={sensorRefs} />
+          isAdmin ? (
+            <AddShoesDialog testId={test.id} availableShoes={availableShoes} sensorRefs={sensorRefs} />
+          ) : undefined
         }
       >
-        <AssignedShoesTable rows={assignedShoes} sensorRefs={sensorRefs} modelNames={modelNames} />
+        <AssignedShoesTable
+          rows={assignedShoes}
+          sensorRefs={sensorRefs}
+          modelNames={modelNames}
+          brands={brands}
+          basePath={basePath}
+          isAdmin={isAdmin}
+        />
       </Panel>
     </div>
   );

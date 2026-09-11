@@ -36,3 +36,32 @@ export async function createTestShoe(
 export async function deleteTestShoe(token: string, id: number) {
   return xanoFetch<null>(`/admin/test_shoe/${id}`, { method: "DELETE", token });
 }
+
+export interface ClientTestShoeFilters {
+  testId?: number;
+}
+
+// Enterprise-account equivalent — /client prefix, scoped to the caller's
+// org server-side from the token. Optional test_id narrows to one test's
+// assigned shoes instead of the whole brand.
+export async function listClientTestShoes(token: string, filters: ClientTestShoeFilters = {}) {
+  const params = new URLSearchParams();
+  if (filters.testId) params.set("test_id", String(filters.testId));
+
+  const qs = params.toString();
+  return xanoFetch<TestShoeRecord[]>(`/client/test_shoe${qs ? `?${qs}` : ""}`, { token });
+}
+
+export async function safeListClientTestShoes(
+  token: string,
+  filters: ClientTestShoeFilters = {},
+): Promise<{ testShoes: TestShoeRecord[]; error: string | null }> {
+  try {
+    return { testShoes: await listClientTestShoes(token, filters), error: null };
+  } catch (err) {
+    return {
+      testShoes: [],
+      error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error.",
+    };
+  }
+}

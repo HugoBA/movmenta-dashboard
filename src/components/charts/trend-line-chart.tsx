@@ -19,12 +19,14 @@ export function TrendLineChart({
   unit = "",
   color = categorical[0],
   height = 260,
+  smooth = false,
 }: {
   categories: string[];
   values: number[];
   unit?: string;
   color?: string;
   height?: number;
+  smooth?: boolean;
 }) {
   const format = (v: number) => `${v}${unit}`;
 
@@ -62,6 +64,7 @@ export function TrendLineChart({
             color,
             lineStyle: { width: 2, color },
             showSymbol: false,
+            smooth: smooth ? 0.35 : false,
             emphasis: { focus: "series" },
             areaStyle: {
               color: {

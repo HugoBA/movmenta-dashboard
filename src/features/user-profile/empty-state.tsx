@@ -5,9 +5,11 @@ import { ProfileSearch, type SearchableProfile } from "./profile-search";
 export function UserProfileEmptyState({
   profiles,
   error,
+  basePath = "/admin",
 }: {
   profiles: SearchableProfile[];
   error: string | null;
+  basePath?: string;
 }) {
   return (
     <div className="flex flex-col items-center px-5 py-24 text-center text-text-faint">
@@ -26,15 +28,17 @@ export function UserProfileEmptyState({
           Couldn&apos;t load profiles from Xano: {error}
         </p>
       ) : (
-        <ProfileSearch profiles={profiles} />
+        <ProfileSearch profiles={profiles} basePath={basePath} />
       )}
 
-      <Link
-        href="/admin/user-profiles"
-        className="mt-6 text-[12px] text-text-faint underline-offset-4 hover:text-foreground hover:underline"
-      >
-        Or browse all profiles →
-      </Link>
+      {basePath === "/admin" && (
+        <Link
+          href="/admin/user-profiles"
+          className="mt-6 text-[12px] text-text-faint underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Or browse all profiles →
+        </Link>
+      )}
     </div>
   );
 }

@@ -38,6 +38,18 @@ export async function deleteShoes(
     }
   }
 
+  // /client/shoes (and everything else that lists shoes) reads a separate,
+  // independently cached /client/shoe fetch — see features/tests/actions.ts's
+  // revalidateTestDataConsumers for why every consumer needs revalidating.
   revalidatePath("/admin/shoes");
+  revalidatePath("/admin/tests");
+  revalidatePath("/admin/test-results");
+  revalidatePath("/admin/overview");
+  revalidatePath("/admin/user");
+  revalidatePath("/client/shoes");
+  revalidatePath("/client/tests");
+  revalidatePath("/client/test-results");
+  revalidatePath("/client/overview");
+  revalidatePath("/client/user");
   return { deletedCount };
 }

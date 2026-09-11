@@ -3,7 +3,8 @@ import { xanoFetch, XanoApiError, xanoErrorMessage } from "./client";
 
 // Matches the "brand" query group (see /apispec:query:4011064:FwZiaBAf) — the
 // shoe-brand lookup table referenced by test.brand_id. Not to be confused with
-// dashboard_user "brand" client accounts (see lib/xano/dashboard-user.ts).
+// dashboard_user "brand" client accounts (see lib/xano/dashboard-user.ts) —
+// the brand logo lives there, not on this catalog row.
 export interface ShoeBrandRecord {
   id: number;
   created_at: number;

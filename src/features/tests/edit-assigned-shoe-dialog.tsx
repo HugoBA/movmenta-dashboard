@@ -19,8 +19,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import type { ShoeRecord } from "@/lib/xano/shoes";
 import type { SensorRefRecord } from "@/lib/xano/sensor-refs";
+import type { ShoeBrandRecord } from "@/lib/xano/shoe-brands";
 import { updateAssignedShoeConfig } from "./actions";
 import { REF_MAGNET_OPTIONS } from "./constants";
 
@@ -32,11 +34,13 @@ export function EditAssignedShoeDialog({
   shoe,
   sensorRefs,
   modelNames,
+  brands,
   trigger,
 }: {
   shoe: ShoeRecord;
   sensorRefs: SensorRefRecord[];
   modelNames: string[];
+  brands: ShoeBrandRecord[];
   trigger: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -51,6 +55,8 @@ export function EditAssignedShoeDialog({
   const [refSensor, setRefSensor] = useState(
     sensorRefs.find((sensor) => sensor.name === shoe.ref_sensor)?.id.toString() ?? "",
   );
+  const [brandId, setBrandId] = useState(shoe.brand_id ? String(shoe.brand_id) : "");
+  const [factoryValue, setFactoryValue] = useState(String(shoe.factory_value ?? ""));
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,9 +66,24 @@ export function EditAssignedShoeDialog({
       setError("Select a sensor ref.");
       return;
     }
+    if (!brandId) {
+      setError("Select a brand.");
+      return;
+    }
+    const parsedFactoryValue = Number(factoryValue);
+    if (factoryValue === "" || Number.isNaN(parsedFactoryValue)) {
+      setError("Enter a valid factory value.");
+      return;
+    }
     setError(null);
     setIsSubmitting(true);
-    const result = await updateAssignedShoeConfig(shoe.id, { model, refMagnet, refSensor: sensorName });
+    const result = await updateAssignedShoeConfig(shoe.id, {
+      model,
+      refMagnet,
+      refSensor: sensorName,
+      brandId: Number(brandId),
+      factoryValue: parsedFactoryValue,
+    });
     setIsSubmitting(false);
     if (result?.error) {
       setError(result.error);
@@ -81,6 +102,8 @@ export function EditAssignedShoeDialog({
           setModel(shoe.model ?? "");
           setRefMagnet(shoe.ref_magnet || REF_MAGNET_OPTIONS[0]);
           setRefSensor(sensorRefs.find((sensor) => sensor.name === shoe.ref_sensor)?.id.toString() ?? "");
+          setBrandId(shoe.brand_id ? String(shoe.brand_id) : "");
+          setFactoryValue(String(shoe.factory_value ?? ""));
         }
       }}
     >
@@ -95,6 +118,37 @@ export function EditAssignedShoeDialog({
         </DialogHeader>
 
         <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="editBrand">Brand</FieldLabel>
+            <Select value={brandId} onValueChange={setBrandId}>
+              <SelectTrigger id="editBrand" className="w-full">
+                <SelectValue placeholder="Select a brand" />
+              </SelectTrigger>
+              <SelectContent>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={String(brand.id)}>
+                    {brand.brand_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {brands.length === 0 && (
+              <p className="text-sm text-text-faint">
+                No shoe brand yet — add one under Data / Shoe brands.
+              </p>
+            )}
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="editFactoryValue">Factory value</FieldLabel>
+            <Input
+              id="editFactoryValue"
+              type="number"
+              value={factoryValue}
+              onChange={(e) => setFactoryValue(e.target.value)}
+            />
+          </Field>
+
           <Field>
             <FieldLabel htmlFor="editModel">Model</FieldLabel>
             <Select value={model} onValueChange={setModel}>
@@ -164,7 +218,11 @@ export function EditAssignedShoeDialog({
           <Button type="button" variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button type="button" disabled={isSubmitting || !refSensor} onClick={handleSave}>
+          <Button
+            type="button"
+            disabled={isSubmitting || !refSensor || !brandId || factoryValue === ""}
+            onClick={handleSave}
+          >
             {isSubmitting ? "Saving…" : "Save"}
           </Button>
         </DialogFooter>

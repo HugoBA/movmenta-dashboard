@@ -41,3 +41,22 @@ export async function safeListUserProfiles(
 export async function deleteUserProfile(token: string, id: number) {
   return xanoFetch<null>(`/user_profile/${id}`, { method: "DELETE", token });
 }
+
+// Enterprise-account equivalent — /client prefix, scoped to the caller's
+// org server-side from the token.
+export async function listClientUserProfiles(token: string) {
+  return xanoFetch<UserProfileRecord[]>("/client/user_profile", { token });
+}
+
+export async function safeListClientUserProfiles(
+  token: string,
+): Promise<{ profiles: UserProfileRecord[]; error: string | null }> {
+  try {
+    return { profiles: await listClientUserProfiles(token), error: null };
+  } catch (err) {
+    return {
+      profiles: [],
+      error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error.",
+    };
+  }
+}

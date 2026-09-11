@@ -7,7 +7,10 @@ export interface ShoeRecord {
   id_nfc: string;
   serial_number: string;
   size_code: string;
-  brand: string;
+  // Legacy denormalized text field — some Xano query versions instead expand
+  // it into the joined shoe_brand row ({id, created_at, brand_name}). Use
+  // resolveBrandName() (shoes-table.tsx) rather than reading this directly.
+  brand: string | { brand_name?: string } | null;
   model: string;
   variant: string;
   gender: string;
@@ -46,11 +49,30 @@ export async function safeListShoes(
 export async function updateShoe(
   token: string,
   id: number,
-  input: Partial<Pick<ShoeRecord, "model" | "ref_magnet" | "ref_sensor">>,
+  input: Partial<Pick<ShoeRecord, "model" | "ref_magnet" | "ref_sensor" | "brand_id" | "factory_value">>,
 ) {
   return xanoFetch<ShoeRecord>(`/admin/shoe/${id}`, { method: "PATCH", token, body: input });
 }
 
 export async function deleteShoe(token: string, id: number) {
   return xanoFetch<null>(`/admin/shoe/${id}`, { method: "DELETE", token });
+}
+
+// Enterprise-account equivalent — /client prefix, scoped to the caller's
+// org server-side from the token.
+export async function listClientShoes(token: string) {
+  return xanoFetch<ShoeRecord[]>("/client/shoe", { token });
+}
+
+export async function safeListClientShoes(
+  token: string,
+): Promise<{ shoes: ShoeRecord[]; error: string | null }> {
+  try {
+    return { shoes: await listClientShoes(token), error: null };
+  } catch (err) {
+    return {
+      shoes: [],
+      error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error.",
+    };
+  }
 }

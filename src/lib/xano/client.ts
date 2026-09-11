@@ -25,6 +25,9 @@ export async function xanoFetch<T>(
   }
 
   const isRead = (init.method ?? "GET") === "GET";
+  // File uploads (e.g. a brand logo) pass a FormData body — let fetch set
+  // its own multipart Content-Type (with boundary) instead of JSON.
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const res = await fetch(`${XANO_BASE_URL}${path}`, {
     // Reads are cached in Next's data cache; mutations always hit Xano.
@@ -33,11 +36,11 @@ export async function xanoFetch<T>(
     ...(isRead ? { cache: "force-cache" as const } : {}),
     ...init,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: isFormData ? (body as FormData) : body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {

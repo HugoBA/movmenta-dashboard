@@ -17,7 +17,13 @@ function matches(test: SearchableTest, query: string): boolean {
   return test.name.toLowerCase().includes(q) || test.brandName.toLowerCase().includes(q);
 }
 
-export function TestSearch({ tests }: { tests: SearchableTest[] }) {
+export function TestSearch({
+  tests,
+  basePath = "/admin",
+}: {
+  tests: SearchableTest[];
+  basePath?: string;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -31,7 +37,7 @@ export function TestSearch({ tests }: { tests: SearchableTest[] }) {
 
   const showResults = focused && results.length > 0;
   const select = (test: SearchableTest) => {
-    router.push(`/admin/test-results?testId=${test.id}`);
+    router.push(`${basePath}/test-results?testId=${test.id}`);
   };
 
   return (

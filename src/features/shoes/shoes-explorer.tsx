@@ -5,6 +5,8 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { DeleteRowsDialog } from "@/components/layout/delete-rows-dialog";
 import { ExportCsvButton } from "@/components/layout/export-csv-button";
 import type { ShoeRecord } from "@/lib/xano/shoes";
+import type { SensorRefRecord } from "@/lib/xano/sensor-refs";
+import type { ShoeBrandRecord } from "@/lib/xano/shoe-brands";
 import { ShoesFilters } from "./shoes-filters";
 import { ShoesTable, type ShoesTableHandle } from "./shoes-table";
 import { deleteShoes } from "./actions";
@@ -12,9 +14,19 @@ import { deleteShoes } from "./actions";
 export function ShoesExplorer({
   data,
   initialIdNfc,
+  basePath = "/admin",
+  isAdmin = true,
+  sensorRefs = [],
+  modelNames = [],
+  shoeBrands = [],
 }: {
   data: ShoeRecord[];
   initialIdNfc?: string;
+  basePath?: string;
+  isAdmin?: boolean;
+  sensorRefs?: SensorRefRecord[];
+  modelNames?: string[];
+  shoeBrands?: ShoeBrandRecord[];
 }) {
   const [gender, setGender] = useState("");
   const [idNfc, setIdNfc] = useState(initialIdNfc ?? "");
@@ -49,7 +61,7 @@ export function ShoesExplorer({
               rows: tableRef.current?.getExportRows() ?? [],
             })}
           />
-          {selectedIds.size > 0 && (
+          {isAdmin && selectedIds.size > 0 && (
             <DeleteRowsDialog
               count={selectedIds.size}
               entityLabel="shoe"
@@ -69,6 +81,11 @@ export function ShoesExplorer({
         data={filtered}
         selectedIds={selectedIds}
         onSelectedIdsChange={setSelectedIds}
+        basePath={basePath}
+        isAdmin={isAdmin}
+        sensorRefs={sensorRefs}
+        modelNames={modelNames}
+        shoeBrands={shoeBrands}
       />
     </div>
   );

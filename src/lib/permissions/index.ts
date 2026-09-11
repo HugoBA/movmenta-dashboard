@@ -10,7 +10,7 @@ export function canAccessAdmin(role: UserRole): boolean {
 
 const roleLabels: Record<UserRole, string> = {
   admin: "Sollo admin",
-  user: "Marque",
+  brand: "Brand",
 };
 
 export function roleLabel(role: UserRole): string {

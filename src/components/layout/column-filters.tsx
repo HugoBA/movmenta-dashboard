@@ -37,12 +37,16 @@ export function SetColumnFilter({
   onChange: (included: Set<string> | null) => void;
 }) {
   const [search, setSearch] = useState("");
-  const effective = included ?? new Set(options);
-  const visibleOptions = options.filter((o) => o.toLowerCase().includes(search.toLowerCase()));
+  // Xano fields typed as text can still come back as a number or null for a
+  // given row (e.g. a numeric shoe size) — coerce defensively so a stray
+  // non-string value doesn't crash every table that uses this filter.
+  const safeOptions = options.map((o) => String(o ?? ""));
+  const effective = included ?? new Set(safeOptions);
+  const visibleOptions = safeOptions.filter((o) => o.toLowerCase().includes(search.toLowerCase()));
   const allVisibleChecked = visibleOptions.length > 0 && visibleOptions.every((o) => effective.has(o));
 
   const commit = (next: Set<string>) => {
-    onChange(next.size === options.length ? null : next);
+    onChange(next.size === safeOptions.length ? null : next);
   };
 
   const toggleValue = (value: string, checked: boolean) => {

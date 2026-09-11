@@ -1,12 +1,5 @@
 import { redirect } from "next/navigation";
-import {
-  LayoutDashboard,
-  TrendingUp,
-  Target,
-  BarChart3,
-  Table2,
-  Package,
-} from "lucide-react";
+import { LayoutDashboard, UserRoundSearch, FlaskConical, LineChart, Footprints } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { getSession } from "@/lib/auth/session";
 import { roleLabel } from "@/lib/permissions";
@@ -18,20 +11,16 @@ const navGroups: NavGroup[] = [
     label: "Overview",
     items: [
       { title: "Overview", href: "/client/overview", icon: <LayoutDashboard /> },
-      { title: "Usage", href: "/client/usage", icon: <TrendingUp /> },
+      { title: "User detail", href: "/client/user", icon: <UserRoundSearch /> },
     ],
   },
   {
-    label: "Analyse",
+    label: "Testing",
     items: [
-      { title: "Products", href: "/client/products", icon: <Target /> },
-      { title: "Material analysis", href: "/client/material-analysis", icon: <BarChart3 /> },
-      { title: "Reports", href: "/client/reports", icon: <Table2 /> },
+      { title: "Tests", href: "/client/tests", icon: <FlaskConical /> },
+      { title: "Test results", href: "/client/test-results", icon: <LineChart /> },
+      { title: "Shoes", href: "/client/shoes", icon: <Footprints /> },
     ],
-  },
-  {
-    label: "Data",
-    items: [{ title: "Exports", href: "/client/exports", icon: <Package /> }],
   },
 ];
 
@@ -43,7 +32,7 @@ export default async function ClientLayout({
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const displayName = session.user.organizationName ?? session.user.username;
+  const displayName = session.user.brandName ?? session.user.username;
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -54,6 +43,7 @@ export default async function ClientLayout({
           name: displayName,
           role: roleLabel(session.user.role),
           initials: initials(displayName),
+          avatarUrl: session.user.brandLogoUrl,
         }}
       />
       <main className="min-w-0 flex-1 px-6 py-7 sm:px-10">{children}</main>

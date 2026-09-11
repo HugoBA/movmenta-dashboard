@@ -19,7 +19,15 @@ function PeriodBadge({ period }: { period: string }) {
   );
 }
 
-export function RawResultsPanel({ results, idNfc }: { results: ResultRecord[]; idNfc: string }) {
+export function RawResultsPanel({
+  results,
+  idNfc,
+  percentOnly = false,
+}: {
+  results: ResultRecord[];
+  idNfc: string;
+  percentOnly?: boolean;
+}) {
   const sorted = [...results].sort((a, b) => b.created_at - a.created_at);
 
   return (
@@ -36,8 +44,8 @@ export function RawResultsPanel({ results, idNfc }: { results: ResultRecord[]; i
                 <TableHead>Date</TableHead>
                 <TableHead>Period</TableHead>
                 <TableHead className="text-right">Wear</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead className="text-right">mm</TableHead>
+                {!percentOnly && <TableHead className="text-right">Value</TableHead>}
+                {!percentOnly && <TableHead className="text-right">mm</TableHead>}
                 <TableHead className="text-right">km</TableHead>
                 <TableHead className="text-right">Duration</TableHead>
               </TableRow>
@@ -50,8 +58,10 @@ export function RawResultsPanel({ results, idNfc }: { results: ResultRecord[]; i
                     <PeriodBadge period={row.period} />
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{row.percent}%</TableCell>
-                  <TableCell className="text-right tabular-nums">{row.value}</TableCell>
-                  <TableCell className="text-right tabular-nums">{row.mm.toFixed(1)}</TableCell>
+                  {!percentOnly && <TableCell className="text-right tabular-nums">{row.value}</TableCell>}
+                  {!percentOnly && (
+                    <TableCell className="text-right tabular-nums">{row.mm.toFixed(1)}</TableCell>
+                  )}
                   <TableCell className="text-right tabular-nums">{row.km.toFixed(1)}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatDurationMinutes(row.duration)}</TableCell>
                 </TableRow>

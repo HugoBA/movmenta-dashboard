@@ -24,7 +24,13 @@ function matches(profile: SearchableProfile, query: string): boolean {
   );
 }
 
-export function ProfileSearch({ profiles }: { profiles: SearchableProfile[] }) {
+export function ProfileSearch({
+  profiles,
+  basePath = "/admin",
+}: {
+  profiles: SearchableProfile[];
+  basePath?: string;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
@@ -38,7 +44,7 @@ export function ProfileSearch({ profiles }: { profiles: SearchableProfile[] }) {
 
   const showResults = focused && query.trim().length > 0;
   const select = (profile: SearchableProfile) => {
-    router.push(`/admin/user?nfcId=${encodeURIComponent(profile.idNfc)}`);
+    router.push(`${basePath}/user?nfcId=${encodeURIComponent(profile.idNfc)}`);
   };
 
   return (

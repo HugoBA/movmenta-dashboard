@@ -3,21 +3,38 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { TableLink } from "@/components/layout/table-link";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SetColumnFilter } from "@/components/layout/column-filters";
 import { cn } from "@/lib/utils";
 import type { ShoeRecord } from "@/lib/xano/shoes";
+import type { SensorRefRecord } from "@/lib/xano/sensor-refs";
+import type { ShoeBrandRecord } from "@/lib/xano/shoe-brands";
 import { formatDateTime } from "@/lib/formatting/date";
 import type { CsvRow } from "@/lib/csv";
+import { EditAssignedShoeDialog } from "@/features/tests/edit-assigned-shoe-dialog";
 
 function shoeUserLabel(row: ShoeRecord): string {
   const name = [row.firstname, row.lastname].filter(Boolean).join(" ").trim();
   return name || "—";
 }
 
-function distinctValues(values: string[]): string[] {
-  return [...new Set(values)].sort();
+// brand_id (resolved against the shoe_brand catalog) is the source of truth
+// — row.brand is only a fallback for old rows that predate the brand_id
+// link, and its shape varies by Xano query version: a plain string on some,
+// the expanded shoe_brand row ({id, created_at, brand_name}) on others.
+function resolveBrandName(row: ShoeRecord, brandNameById: Map<number, string>): string {
+  const byId = row.brand_id && brandNameById.get(row.brand_id);
+  if (byId) return byId;
+  if (typeof row.brand === "string") return row.brand;
+  return row.brand?.brand_name ?? "";
+}
+
+// Some of these Xano fields (e.g. shoe size) can come back as a number for
+// a given row even though the type says string — coerce before deduping so
+// the filter/sort/CSV logic below always deals in plain strings.
+function distinctValues(values: unknown[]): string[] {
+  return [...new Set(values.map((v) => String(v ?? "")))].sort();
 }
 
 interface Column {
@@ -44,8 +61,25 @@ export const ShoesTable = forwardRef<
     data: ShoeRecord[];
     selectedIds: Set<number>;
     onSelectedIdsChange: (ids: Set<number>) => void;
+    basePath?: string;
+    isAdmin?: boolean;
+    sensorRefs?: SensorRefRecord[];
+    modelNames?: string[];
+    shoeBrands?: ShoeBrandRecord[];
   }
->(function ShoesTable({ data, selectedIds, onSelectedIdsChange }, ref) {
+>(function ShoesTable(
+  {
+    data,
+    selectedIds,
+    onSelectedIdsChange,
+    basePath = "/admin",
+    isAdmin = true,
+    sensorRefs = [],
+    modelNames = [],
+    shoeBrands = [],
+  },
+  ref,
+) {
   const [sortKey, setSortKey] = useState("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [brandIncluded, setBrandIncluded] = useState<Set<string> | null>(null);
@@ -59,9 +93,13 @@ export const ShoesTable = forwardRef<
     setScrollMargin(containerRef.current?.offsetTop ?? 0);
   }, []);
 
+  const brandNameById = useMemo(
+    () => new Map(shoeBrands.map((b) => [b.id, b.brand_name])),
+    [shoeBrands],
+  );
   const brandOptions = useMemo(
-    () => distinctValues(data.map((row) => row.brand)),
-    [data],
+    () => distinctValues(data.map((row) => resolveBrandName(row, brandNameById))),
+    [data, brandNameById],
   );
   const modelOptions = useMemo(
     () => distinctValues(data.map((row) => row.model)),
@@ -80,12 +118,12 @@ export const ShoesTable = forwardRef<
   const filtered = useMemo(() => {
     return data.filter(
       (row) =>
-        (brandIncluded === null || brandIncluded.has(row.brand)) &&
-        (modelIncluded === null || modelIncluded.has(row.model)) &&
-        (sizeIncluded === null || sizeIncluded.has(row.size)) &&
+        (brandIncluded === null || brandIncluded.has(resolveBrandName(row, brandNameById))) &&
+        (modelIncluded === null || modelIncluded.has(String(row.model ?? ""))) &&
+        (sizeIncluded === null || sizeIncluded.has(String(row.size ?? ""))) &&
         (userIncluded === null || userIncluded.has(shoeUserLabel(row))),
     );
-  }, [data, brandIncluded, modelIncluded, sizeIncluded, userIncluded]);
+  }, [data, brandIncluded, modelIncluded, sizeIncluded, userIncluded, brandNameById]);
 
   const columns: Column[] = [
     {
@@ -102,7 +140,7 @@ export const ShoesTable = forwardRef<
       width: "160px",
       render: (row) =>
         row.id_nfc ? (
-          <TableLink href={`/admin/user?nfcId=${encodeURIComponent(row.id_nfc)}`} newTab>
+          <TableLink href={`${basePath}/user?nfcId=${encodeURIComponent(row.id_nfc)}`} newTab>
             {row.id_nfc}
           </TableLink>
         ) : (
@@ -115,9 +153,9 @@ export const ShoesTable = forwardRef<
       key: "brand",
       label: "Brand",
       width: "120px",
-      render: (row) => row.brand || "—",
-      sortValue: (row) => row.brand,
-      csv: (row) => row.brand || "—",
+      render: (row) => resolveBrandName(row, brandNameById) || "—",
+      sortValue: (row) => resolveBrandName(row, brandNameById),
+      csv: (row) => resolveBrandName(row, brandNameById) || "—",
       filter: (
         <SetColumnFilter
           options={brandOptions}
@@ -189,7 +227,7 @@ export const ShoesTable = forwardRef<
       render: (row) =>
         row.id_nfc ? (
           <TableLink
-            href={`/admin/user-profiles?idNfc=${encodeURIComponent(row.id_nfc)}`}
+            href={`${basePath}/user?nfcId=${encodeURIComponent(row.id_nfc)}`}
             tooltip="Go to user profile"
           >
             {shoeUserLabel(row)}
@@ -336,12 +374,13 @@ export const ShoesTable = forwardRef<
                 </div>
               </th>
             ))}
+            {isAdmin && <th style={{ width: "56px" }} className="border-b border-border-soft px-3 py-3" />}
           </tr>
         </thead>
         <tbody>
           {paddingTop > 0 && (
             <tr>
-              <td style={{ height: paddingTop }} colSpan={columns.length + 1} />
+              <td style={{ height: paddingTop }} colSpan={columns.length + 1 + (isAdmin ? 1 : 0)} />
             </tr>
           )}
           {virtualRows.map((virtualRow) => {
@@ -377,6 +416,25 @@ export const ShoesTable = forwardRef<
                     {col.render(row)}
                   </td>
                 ))}
+                {isAdmin && (
+                  <td className="px-3 py-2.5 text-right">
+                    <EditAssignedShoeDialog
+                      shoe={row}
+                      sensorRefs={sensorRefs}
+                      modelNames={modelNames}
+                      brands={shoeBrands}
+                      trigger={
+                        <button
+                          type="button"
+                          title="Edit shoe"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                        >
+                          <Pencil />
+                        </button>
+                      }
+                    />
+                  </td>
+                )}
               </tr>
             );
           })}
@@ -384,7 +442,7 @@ export const ShoesTable = forwardRef<
             <tr>
               <td
                 style={{ height: paddingBottom }}
-                colSpan={columns.length + 1}
+                colSpan={columns.length + 1 + (isAdmin ? 1 : 0)}
               />
             </tr>
           )}

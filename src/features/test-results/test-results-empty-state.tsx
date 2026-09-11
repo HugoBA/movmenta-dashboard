@@ -5,9 +5,11 @@ import { TestSearch, type SearchableTest } from "./test-search";
 export function TestResultsEmptyState({
   tests,
   error,
+  basePath = "/admin",
 }: {
   tests: SearchableTest[];
   error: string | null;
+  basePath?: string;
 }) {
   return (
     <div className="flex flex-col items-center px-5 py-24 text-center text-text-faint">
@@ -26,11 +28,11 @@ export function TestResultsEmptyState({
           Couldn&apos;t load tests from Xano: {error}
         </p>
       ) : (
-        <TestSearch tests={tests} />
+        <TestSearch tests={tests} basePath={basePath} />
       )}
 
       <Link
-        href="/admin/tests"
+        href={`${basePath}/tests`}
         className="mt-6 text-[12px] text-text-faint underline-offset-4 hover:text-foreground hover:underline"
       >
         Or browse all tests →

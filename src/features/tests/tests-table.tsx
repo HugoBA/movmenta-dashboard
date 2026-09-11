@@ -33,12 +33,16 @@ export function TestsTable({
   shoeCounts,
   selectedIds,
   onSelectedIdsChange,
+  basePath = "/admin",
+  isAdmin = true,
 }: {
   data: TestRecord[];
   brands: ShoeBrandRecord[];
   shoeCounts: Record<number, number>;
   selectedIds: Set<number>;
   onSelectedIdsChange: (ids: Set<number>) => void;
+  basePath?: string;
+  isAdmin?: boolean;
 }) {
   const [sortKey, setSortKey] = useState("name");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -67,7 +71,7 @@ export function TestsTable({
       key: "name",
       label: "Name",
       render: (row) => (
-        <TableLink href={`/admin/tests?testId=${row.id}`}>
+        <TableLink href={`${basePath}/tests?testId=${row.id}`}>
           <span className="font-semibold">{row.name}</span>
         </TableLink>
       ),
@@ -209,25 +213,27 @@ export function TestsTable({
                 <td className="px-3 py-2.5 text-right">
                   <div className="flex justify-end gap-1.5">
                     <Link
-                      href={`/admin/test-results?testId=${row.id}`}
+                      href={`${basePath}/test-results?testId=${row.id}`}
                       title="View results"
                       className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
                     >
                       <LineChart />
                     </Link>
-                    <TestFormDialog
-                      test={row}
-                      brands={brands}
-                      trigger={
-                        <button
-                          type="button"
-                          title="Edit"
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
-                        >
-                          <Pencil />
-                        </button>
-                      }
-                    />
+                    {isAdmin && (
+                      <TestFormDialog
+                        test={row}
+                        brands={brands}
+                        trigger={
+                          <button
+                            type="button"
+                            title="Edit"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                          >
+                            <Pencil />
+                          </button>
+                        }
+                      />
+                    )}
                   </div>
                 </td>
               </tr>

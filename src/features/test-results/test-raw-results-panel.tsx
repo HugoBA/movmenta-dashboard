@@ -20,7 +20,15 @@ function PeriodBadge({ period }: { period: string }) {
   );
 }
 
-export function TestRawResultsPanel({ testers }: { testers: Tester[] }) {
+export function TestRawResultsPanel({
+  testers,
+  basePath = "/admin",
+  percentOnly = false,
+}: {
+  testers: Tester[];
+  basePath?: string;
+  percentOnly?: boolean;
+}) {
   const rows = testers
     .flatMap((tester) => tester.rawResults.map((result) => ({ tester, result })))
     .sort((a, b) => b.result.created_at - a.result.created_at);
@@ -41,8 +49,8 @@ export function TestRawResultsPanel({ testers }: { testers: Tester[] }) {
                 <TableHead>Tester</TableHead>
                 <TableHead>Period</TableHead>
                 <TableHead className="text-right">Wear</TableHead>
-                <TableHead className="text-right">Value</TableHead>
-                <TableHead className="text-right">mm</TableHead>
+                {!percentOnly && <TableHead className="text-right">Value</TableHead>}
+                {!percentOnly && <TableHead className="text-right">mm</TableHead>}
                 <TableHead className="text-right">km</TableHead>
                 <TableHead className="text-right">Duration</TableHead>
               </TableRow>
@@ -52,7 +60,7 @@ export function TestRawResultsPanel({ testers }: { testers: Tester[] }) {
                 <TableRow key={result.id}>
                   <TableCell className="text-text-faint">{formatDateTime(result.created_at)}</TableCell>
                   <TableCell>
-                    <TableLink href={`/admin/user?nfcId=${encodeURIComponent(tester.idNfc)}`}>
+                    <TableLink href={`${basePath}/user?nfcId=${encodeURIComponent(tester.idNfc)}`}>
                       {tester.label}
                     </TableLink>
                   </TableCell>
@@ -60,8 +68,10 @@ export function TestRawResultsPanel({ testers }: { testers: Tester[] }) {
                     <PeriodBadge period={result.period} />
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{result.percent}%</TableCell>
-                  <TableCell className="text-right tabular-nums">{result.value}</TableCell>
-                  <TableCell className="text-right tabular-nums">{result.mm.toFixed(1)}</TableCell>
+                  {!percentOnly && <TableCell className="text-right tabular-nums">{result.value}</TableCell>}
+                  {!percentOnly && (
+                    <TableCell className="text-right tabular-nums">{result.mm.toFixed(1)}</TableCell>
+                  )}
                   <TableCell className="text-right tabular-nums">{result.km.toFixed(1)}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatDurationMinutes(result.duration)}

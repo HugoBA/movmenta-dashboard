@@ -11,6 +11,7 @@ import {
 import { TableLink } from "@/components/layout/table-link";
 import type { ShoeRecord } from "@/lib/xano/shoes";
 import type { SensorRefRecord } from "@/lib/xano/sensor-refs";
+import type { ShoeBrandRecord } from "@/lib/xano/shoe-brands";
 import { unassignShoeFromTest } from "./actions";
 import { EditAssignedShoeDialog } from "./edit-assigned-shoe-dialog";
 
@@ -23,10 +24,16 @@ export function AssignedShoesTable({
   rows,
   sensorRefs,
   modelNames,
+  brands,
+  basePath = "/admin",
+  isAdmin = true,
 }: {
   rows: AssignedShoeRow[];
   sensorRefs: SensorRefRecord[];
   modelNames: string[];
+  brands: ShoeBrandRecord[];
+  basePath?: string;
+  isAdmin?: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -51,13 +58,15 @@ export function AssignedShoesTable({
         </p>
       )}
       <DataTable>
-        <DataTableHeadRow headers={["NFC id / Serial", "Model", "Magnet", "Sensor", ""]} />
+        <DataTableHeadRow
+          headers={isAdmin ? ["NFC id / Serial", "Model", "Magnet", "Sensor", ""] : ["NFC id / Serial", "Model", "Magnet", "Sensor"]}
+        />
         <tbody>
           {rows.map(({ testShoeId, shoe }) => (
             <DataTableRow key={testShoeId}>
               <DataTableCell>
                 {shoe.id_nfc ? (
-                  <TableLink href={`/admin/user?nfcId=${encodeURIComponent(shoe.id_nfc)}`}>
+                  <TableLink href={`${basePath}/user?nfcId=${encodeURIComponent(shoe.id_nfc)}`}>
                     <span className="font-semibold">{shoe.id_nfc}</span>
                   </TableLink>
                 ) : (
@@ -67,33 +76,36 @@ export function AssignedShoesTable({
               <DataTableCell>{shoe.model || "—"}</DataTableCell>
               <DataTableCell>{shoe.ref_magnet || "—"}</DataTableCell>
               <DataTableCell>{shoe.ref_sensor || "—"}</DataTableCell>
-              <DataTableCell className="pr-0 text-right">
-                <div className="flex justify-end gap-1.5">
-                  <EditAssignedShoeDialog
-                    shoe={shoe}
-                    sensorRefs={sensorRefs}
-                    modelNames={modelNames}
-                    trigger={
-                      <button
-                        type="button"
-                        title="Edit shoe"
-                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
-                      >
-                        <Pencil />
-                      </button>
-                    }
-                  />
-                  <button
-                    type="button"
-                    title="Remove from test"
-                    disabled={isPending}
-                    onClick={() => handleUnassign(testShoeId)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-destructive disabled:opacity-50 [&_svg]:size-4"
-                  >
-                    <X />
-                  </button>
-                </div>
-              </DataTableCell>
+              {isAdmin && (
+                <DataTableCell className="pr-0 text-right">
+                  <div className="flex justify-end gap-1.5">
+                    <EditAssignedShoeDialog
+                      shoe={shoe}
+                      sensorRefs={sensorRefs}
+                      modelNames={modelNames}
+                      brands={brands}
+                      trigger={
+                        <button
+                          type="button"
+                          title="Edit shoe"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                        >
+                          <Pencil />
+                        </button>
+                      }
+                    />
+                    <button
+                      type="button"
+                      title="Remove from test"
+                      disabled={isPending}
+                      onClick={() => handleUnassign(testShoeId)}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-destructive disabled:opacity-50 [&_svg]:size-4"
+                    >
+                      <X />
+                    </button>
+                  </div>
+                </DataTableCell>
+              )}
             </DataTableRow>
           ))}
         </tbody>

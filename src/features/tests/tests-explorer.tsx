@@ -14,17 +14,21 @@ export function TestsExplorer({
   data,
   brands,
   shoeCounts,
+  basePath = "/admin",
+  isAdmin = true,
 }: {
   data: TestRecord[];
   brands: ShoeBrandRecord[];
   shoeCounts: Record<number, number>;
+  basePath?: string;
+  isAdmin?: boolean;
 }) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   return (
     <div className="animate-rise">
       <div className="mb-4 flex items-center justify-end gap-2">
-        {selectedIds.size > 0 && (
+        {isAdmin && selectedIds.size > 0 && (
           <DeleteRowsDialog
             count={selectedIds.size}
             entityLabel="test"
@@ -32,15 +36,17 @@ export function TestsExplorer({
             onDeleted={() => setSelectedIds(new Set())}
           />
         )}
-        <TestFormDialog
-          brands={brands}
-          trigger={
-            <Pill type="button" tone="invert">
-              <Plus />
-              New test
-            </Pill>
-          }
-        />
+        {isAdmin && (
+          <TestFormDialog
+            brands={brands}
+            trigger={
+              <Pill type="button" tone="invert">
+                <Plus />
+                New test
+              </Pill>
+            }
+          />
+        )}
       </div>
 
       <p className="mb-3 text-sm text-text-faint">
@@ -53,6 +59,8 @@ export function TestsExplorer({
         shoeCounts={shoeCounts}
         selectedIds={selectedIds}
         onSelectedIdsChange={setSelectedIds}
+        basePath={basePath}
+        isAdmin={isAdmin}
       />
     </div>
   );

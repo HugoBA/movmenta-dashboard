@@ -15,9 +15,11 @@ export interface SensorOption {
 export function SensorSelector({
   sensors,
   activeIdNfc,
+  basePath = "/admin",
 }: {
   sensors: SensorOption[];
   activeIdNfc: string;
+  basePath?: string;
 }) {
   return (
     <Popover>
@@ -38,7 +40,7 @@ export function SensorSelector({
             return (
               <Link
                 key={sensor.idNfc}
-                href={`/admin/user?nfcId=${encodeURIComponent(sensor.idNfc)}`}
+                href={`${basePath}/user?nfcId=${encodeURIComponent(sensor.idNfc)}`}
                 className={cn(
                   "flex items-center justify-between gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-none hover:bg-white/[0.03]",
                   isActive && "bg-brand-cyan/12",

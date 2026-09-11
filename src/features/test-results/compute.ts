@@ -63,33 +63,34 @@ export function buildTestersForTest(
 }
 
 export interface WearAttempt {
-  date: number;
-  value: number;
+  // Cumulative distance for this tester at the pre scan (before the run)
+  // and, once the post scan lands, after it — so a session plots as two
+  // x-positions on a distance axis rather than one.
+  kmPre: number;
+  kmPost: number | null;
+  pre: ResultRecord;
   post: ResultRecord | null;
 }
 
-// Looser than computeWearSessions: keeps every scan instead of dropping the
-// unpaired ones. A pre without a matching post still plots (post stays
-// null — no post dot for it); a post with no pending pre plots using its
-// own value as the curve point instead (no post dot either, since that
-// value already *is* the point).
+// One entry per pre/post session, carrying the raw records (not a single
+// pre-picked metric) so callers can plot % or mm without recomputing.
+// Unpaired scans (a pre with no post yet, or a stray post) are dropped —
+// they can't be placed on a distance axis without a session to anchor them.
 export function computeWearAttempts(results: ResultRecord[]): WearAttempt[] {
   const chronological = [...results].sort((a, b) => a.created_at - b.created_at);
   const attempts: WearAttempt[] = [];
-  let pending: WearAttempt | null = null;
+  let pendingPre: ResultRecord | null = null;
+  let cumulativeKm = 0;
 
   for (const row of chronological) {
     const period = row.period?.toLowerCase();
     if (period === "pre") {
-      pending = { date: row.created_at, value: row.value, post: null };
-      attempts.push(pending);
-    } else if (period === "post") {
-      if (pending && !pending.post) {
-        pending.post = row;
-        pending = null;
-      } else {
-        attempts.push({ date: row.created_at, value: row.value, post: null });
-      }
+      pendingPre = row;
+    } else if (period === "post" && pendingPre) {
+      const kmPre = cumulativeKm;
+      cumulativeKm += row.km || 0;
+      attempts.push({ kmPre, kmPost: cumulativeKm, pre: pendingPre, post: row });
+      pendingPre = null;
     }
   }
 
@@ -100,9 +101,112 @@ export function testerTotalKm(tester: Tester): number {
   return tester.sessions.reduce((sum, session) => sum + (session.post.km || 0), 0);
 }
 
-export function testerAvgDelta(tester: Tester): number | null {
+export interface WeightWearPoint {
+  idNfc: string;
+  label: string;
+  weight: number;
+  gender: string;
+  wearRatePer100km: number;
+}
+
+// Cushioning-loss rate normalized by distance (% condition lost per 100km),
+// so it isolates "how fast does this shoe wear" from "how far did this
+// tester run" — the thing worth plotting against bodyweight.
+export function computeWeightWearPoints(
+  testers: Tester[],
+  profileByIdNfc: Map<string, { weight: number; gender: string }>,
+): WeightWearPoint[] {
+  const points: WeightWearPoint[] = [];
+  for (const tester of testers) {
+    const profile = profileByIdNfc.get(tester.idNfc);
+    if (!profile || !profile.weight) continue;
+    const totalKm = testerTotalKm(tester);
+    if (totalKm < 20) continue; // not enough distance for a stable rate yet
+
+    const latest = [...tester.rawResults].sort((a, b) => b.created_at - a.created_at)[0];
+    if (!latest) continue;
+
+    points.push({
+      idNfc: tester.idNfc,
+      label: tester.label,
+      weight: profile.weight,
+      gender: profile.gender,
+      wearRatePer100km: Number((((100 - latest.percent) / totalKm) * 100).toFixed(2)),
+    });
+  }
+  return points;
+}
+
+export interface TesterWearRate {
+  idNfc: string;
+  label: string;
+  weight: number;
+  wearLostPer10km: number; // negative — % of condition lost per 10km covered
+}
+
+// Same normalized wear rate as computeWeightWearPoints, rescaled per 10km
+// and expressed as a loss (negative) to plot on the existing diverging bar
+// chart. Sorted heaviest-to-lightest tester so the weight/wear-rate link
+// reads directly off the bar order, not just a hover tooltip.
+export function computeWearRatePerTester(
+  testers: Tester[],
+  profileByIdNfc: Map<string, { weight: number }>,
+): TesterWearRate[] {
+  const rows: TesterWearRate[] = [];
+  for (const tester of testers) {
+    const profile = profileByIdNfc.get(tester.idNfc);
+    if (!profile || !profile.weight) continue;
+    const totalKm = testerTotalKm(tester);
+    if (totalKm < 20) continue; // not enough distance for a stable rate yet
+
+    const latest = [...tester.rawResults].sort((a, b) => b.created_at - a.created_at)[0];
+    if (!latest) continue;
+
+    rows.push({
+      idNfc: tester.idNfc,
+      label: tester.label,
+      weight: profile.weight,
+      wearLostPer10km: Number((-((100 - latest.percent) / totalKm) * 10).toFixed(2)),
+    });
+  }
+  return rows.sort((a, b) => b.weight - a.weight);
+}
+
+export interface SessionTempPoint {
+  x: number; // ambient temperature (°C), averaged pre/post
+  y: number; // % lost per 10km, this single session
+  label: string;
+}
+
+// Unlike weight (one value per tester, ~a dozen points), temperature is
+// logged per session — every run gives its own point, so across a whole
+// test this has real statistical weight and a trend line is warranted.
+export function computeSessionTempPoints(testers: Tester[]): SessionTempPoint[] {
+  const points: SessionTempPoint[] = [];
+  for (const tester of testers) {
+    for (const session of tester.sessions) {
+      const km = session.post.km;
+      // The sensor's own ~1% measurement noise is roughly constant per
+      // scan regardless of distance — normalizing it by a very short run
+      // blows it up into an outlier rate (or even a bogus negative one).
+      // Require enough distance for that noise floor to be small relative
+      // to the per-10km rate we're computing.
+      if (!km || km < 5) continue;
+      const lost = session.pre.percent - session.post.percent;
+      const temp = (session.pre.temp + session.post.temp) / 2;
+      points.push({
+        x: Number(temp.toFixed(1)),
+        y: Number(((lost / km) * 10).toFixed(2)),
+        label: tester.label,
+      });
+    }
+  }
+  return points;
+}
+
+export function testerAvgDelta(tester: Tester, metric: "value" | "percent" = "value"): number | null {
   if (tester.sessions.length === 0) return null;
-  const total = tester.sessions.reduce((sum, s) => sum + (s.post.value - s.pre.value), 0);
+  const total = tester.sessions.reduce((sum, s) => sum + (s.post[metric] - s.pre[metric]), 0);
   return total / tester.sessions.length;
 }
 
@@ -116,7 +220,6 @@ export interface TestResultsStats {
   totalScans: number;
   totalSessions: number;
   totalKm: number;
-  avgDeltaValue: number | null;
   activeTesters: number;
   totalTesters: number;
   biggestSessionLastWeek: TesterHighlight | null;
@@ -133,9 +236,6 @@ export function computeTestResultsStats(testers: Tester[]): TestResultsStats {
   );
   const totalSessions = allSessions.length;
   const totalKm = allSessions.reduce((sum, { session }) => sum + (session.post.km || 0), 0);
-
-  const deltas = allSessions.map(({ session }) => session.post.value - session.pre.value);
-  const avgDeltaValue = deltas.length ? deltas.reduce((a, b) => a + b, 0) / deltas.length : null;
 
   const now = Date.now();
   const lastWeek = allSessions.filter(({ session }) => now - session.date <= WEEK_MS);
@@ -160,7 +260,6 @@ export function computeTestResultsStats(testers: Tester[]): TestResultsStats {
     totalScans,
     totalSessions,
     totalKm,
-    avgDeltaValue,
     activeTesters,
     totalTesters,
     biggestSessionLastWeek: biggestSession

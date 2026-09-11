@@ -9,20 +9,26 @@ import { formatDate, formatShortDate } from "@/lib/formatting/date";
 import { cn } from "@/lib/utils";
 import type { ResultRecord } from "@/lib/xano/results";
 
-export function RawValueTrendPanel({ chronological }: { chronological: ResultRecord[] }) {
-  const [showPercent, setShowPercent] = useState(false);
+export function RawValueTrendPanel({
+  chronological,
+  percentOnly = false,
+}: {
+  chronological: ResultRecord[];
+  percentOnly?: boolean;
+}) {
+  const [showPercent, setShowPercent] = useState(percentOnly);
   const hasResults = chronological.length > 0;
 
   return (
     <Panel
-      title="Raw sensor value — across scans"
+      title={percentOnly ? "Wear — across scans" : "Raw sensor value — across scans"}
       subtitle={
         hasResults
           ? `${chronological.length} scans, from ${formatDate(chronological[0].created_at)} to ${formatDate(chronological[chronological.length - 1].created_at)}`
           : "No scans recorded"
       }
       right={
-        hasResults ? (
+        hasResults && !percentOnly ? (
           <div className="flex items-center gap-2 text-xs text-text-faint">
             <span className={cn(!showPercent && "font-medium text-foreground")}>Value</span>
             <Switch checked={showPercent} onCheckedChange={setShowPercent} size="sm" />

@@ -1,9 +1,8 @@
-import { Pencil, MoreHorizontal } from "lucide-react";
 import { Panel } from "@/components/layout/panel";
 import { SearchInput } from "@/components/layout/search-input";
 import { ExportCsvButton } from "@/components/layout/export-csv-button";
-import { RowActions } from "@/components/layout/row-actions";
 import { TablePagination } from "@/components/layout/table-pagination";
+import { BrandRowActions } from "./brand-row-actions";
 import {
   DataTable,
   DataTableCell,
@@ -15,16 +14,18 @@ import { AccentTag } from "@/components/ui/accent-tag";
 import { ActiveToggle } from "@/components/ui/active-toggle";
 import { getSession } from "@/lib/auth/session";
 import { safeListDashboardUsers } from "@/lib/xano/dashboard-user";
+import { safeListShoeBrands } from "@/lib/xano/shoe-brands";
 import { initials } from "@/lib/formatting/initials";
 import { formatDate } from "@/lib/formatting/date";
 import { toggleBrandActive } from "./actions";
 
 export async function BrandsTable() {
   const session = await getSession();
-  const { users, error } = session
-    ? await safeListDashboardUsers(session.token)
-    : { users: [], error: null };
-  const brands = users.filter((user) => user.role === "user");
+  const [{ users, error }, { brands: shoeBrands }] = session
+    ? await Promise.all([safeListDashboardUsers(session.token), safeListShoeBrands(session.token)])
+    : [{ users: [], error: null }, { brands: [] }];
+  const brands = users.filter((user) => user.role === "brand");
+  const brandNameById = new Map(shoeBrands.map((b) => [b.id, b.brand_name]));
 
   if (error) {
     return (
@@ -47,7 +48,7 @@ export async function BrandsTable() {
             data={{
               headers: ["Brand", "Account", "Created", "Active"],
               rows: brands.map((brand) => ({
-                Brand: brand.organization_name || brand.username,
+                Brand: (brand.brand_id && brandNameById.get(brand.brand_id)) || brand.username,
                 Account: brand.username,
                 Created: formatDate(brand.created_at),
                 Active: brand.active ? "Yes" : "No",
@@ -61,12 +62,12 @@ export async function BrandsTable() {
         <DataTableHeadRow headers={["Brand", "Account", "Created", "Active", ""]} />
         <tbody>
           {brands.map((brand) => {
-            const name = brand.organization_name || brand.username;
+            const name = (brand.brand_id && brandNameById.get(brand.brand_id)) || brand.username;
             return (
               <DataTableRow key={brand.id}>
                 <DataTableCell>
                   <div className="flex items-center gap-3">
-                    <EntityAvatar initials={initials(name)} />
+                    <EntityAvatar initials={initials(name)} src={brand.logo?.url} />
                     <div>
                       <div className="font-semibold">{name}</div>
                       <div className="text-xs text-text-faint">id: {brand.id}</div>
@@ -84,12 +85,7 @@ export async function BrandsTable() {
                   />
                 </DataTableCell>
                 <DataTableCell className="pr-0">
-                  <RowActions
-                    actions={[
-                      { label: "Edit", icon: <Pencil /> },
-                      { label: "More options", icon: <MoreHorizontal /> },
-                    ]}
-                  />
+                  <BrandRowActions brand={brand} brands={shoeBrands} />
                 </DataTableCell>
               </DataTableRow>
             );

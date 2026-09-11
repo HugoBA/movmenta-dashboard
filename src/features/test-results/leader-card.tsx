@@ -10,11 +10,13 @@ export function LeaderCard({
   label,
   highlight,
   index = 0,
+  basePath = "/admin",
 }: {
   icon: ReactNode;
   label: string;
   highlight: TesterHighlight | null;
   index?: number;
+  basePath?: string;
 }) {
   return (
     <div
@@ -35,7 +37,7 @@ export function LeaderCard({
 
       {highlight ? (
         <Link
-          href={`/admin/user?nfcId=${encodeURIComponent(highlight.idNfc)}`}
+          href={`${basePath}/user?nfcId=${encodeURIComponent(highlight.idNfc)}`}
           className="group flex items-center gap-3"
         >
           <EntityAvatar initials={initials(highlight.label) || "?"} tone="accent" />

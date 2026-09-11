@@ -44,7 +44,7 @@ const variantStyles: Record<
   },
 };
 
-type Org = { name: string; role: string; initials: string };
+type Org = { name: string; role: string; initials: string; avatarUrl?: string | null };
 type Styles = (typeof variantStyles)[Variant];
 
 function SidebarNav({
@@ -109,15 +109,24 @@ function OrgMenu({ org, styles }: { org: Org; styles: Styles }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex w-full items-center gap-2.5 rounded-lg bg-card px-2.5 py-2.5 text-left hover:bg-accent">
-          <div
-            className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg font-heading text-xs font-bold",
-              styles.orgAvatar,
-              styles.orgAvatarText,
-            )}
-          >
-            {org.initials}
-          </div>
+          {org.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- brand logos are arbitrary uploaded Xano-hosted images
+            <img
+              src={org.avatarUrl}
+              alt=""
+              className="h-8 w-8 shrink-0 rounded-lg border border-border-soft object-cover"
+            />
+          ) : (
+            <div
+              className={cn(
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-heading text-xs font-bold",
+                styles.orgAvatar,
+                styles.orgAvatarText,
+              )}
+            >
+              {org.initials}
+            </div>
+          )}
           <div>
             <div className="text-sm font-semibold">{org.name}</div>
             <div className="text-xs text-text-faint">{org.role}</div>

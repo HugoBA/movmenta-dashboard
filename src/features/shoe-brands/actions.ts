@@ -8,6 +8,18 @@ import type { ShoeBrandInput } from "@/schemas/shoe-brands";
 
 const DELETE_PACING_MS = 1200;
 
+// GET /admin/brand is cached (Next's data cache, see lib/xano/client.ts) and
+// read on every page that needs a brand list/dropdown, not just this one —
+// a create/update/delete here has to invalidate all of them or the others
+// keep serving the stale list (e.g. a brand created here wouldn't show up
+// in the "New test" dialog until one of these paths happened to revalidate).
+function revalidateBrandConsumers() {
+  revalidatePath("/admin/shoe-brands");
+  revalidatePath("/admin/tests");
+  revalidatePath("/admin/test-results");
+  revalidatePath("/admin/overview");
+}
+
 export async function createShoeBrandAction(
   input: ShoeBrandInput,
 ): Promise<{ error: string } | undefined> {
@@ -22,7 +34,7 @@ export async function createShoeBrandAction(
     return { error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error." };
   }
 
-  revalidatePath("/admin/shoe-brands");
+  revalidateBrandConsumers();
   return undefined;
 }
 
@@ -41,7 +53,7 @@ export async function updateShoeBrandAction(
     return { error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error." };
   }
 
-  revalidatePath("/admin/shoe-brands");
+  revalidateBrandConsumers();
   return undefined;
 }
 
@@ -74,6 +86,6 @@ export async function deleteShoeBrands(
     }
   }
 
-  revalidatePath("/admin/shoe-brands");
+  revalidateBrandConsumers();
   return { deletedCount };
 }

@@ -5,6 +5,7 @@ import { BaselineDeviationChart } from "@/components/charts/baseline-deviation-c
 import { GroupedBarChart } from "@/components/charts/grouped-bar-chart";
 import { formatDate, formatShortDate, formatTime } from "@/lib/formatting/date";
 import { formatDurationMinutes } from "@/lib/formatting/duration";
+import { cn } from "@/lib/utils";
 import type { UserProfileRecord } from "@/lib/xano/user-profiles";
 import type { ResultRecord } from "@/lib/xano/results";
 import type { ShoeRecord } from "@/lib/xano/shoes";
@@ -13,7 +14,9 @@ import { CharacteristicsPanel } from "./characteristics-panel";
 import { ErrorsPanel } from "./errors-panel";
 import { RawResultsPanel } from "./raw-results-panel";
 import { RawValueTrendPanel } from "./raw-value-trend-panel";
+import { RunsPanel } from "./runs-panel";
 import { computeWearSessions } from "./wear-sessions";
+import type { RunDetails } from "./run-details";
 
 const conditionDeltaTone = { good: "up", ok: "neutral", warn: "warn", critical: "down" } as const;
 
@@ -23,13 +26,20 @@ export function UserProfileView({
   shoe,
   siblings,
   nfcId,
+  basePath = "/admin",
+  runDetailsByPostId,
 }: {
   profile: UserProfileRecord;
   results: ResultRecord[];
   shoe: ShoeRecord | undefined;
   siblings: UserProfileRecord[];
   nfcId: string;
+  basePath?: string;
+  // Simulation-only insight (weather/elevation/route) — omitted entirely
+  // when the caller has no way to compute it, e.g. real admin data today.
+  runDetailsByPostId?: Map<number, RunDetails>;
 }) {
+  const percentOnly = basePath !== "/admin";
   const displayName = [profile.firstName, profile.lastName].filter(Boolean).join(" ") || nfcId;
   const hasResults = results.length > 0;
   const chronological = [...results].sort((a, b) => a.created_at - b.created_at);
@@ -73,11 +83,11 @@ export function UserProfileView({
   return (
     <div>
       <PageHeader
-        eyebrow="ADMIN CONSOLE / USERS"
+        eyebrow={basePath === "/admin" ? "ADMIN CONSOLE / USERS" : "MYBRAND / USERS"}
         eyebrowTone="cyan"
         title={displayName}
         subtitle={`Profile created ${formatDate(profile.created_at)}${profile.email ? ` · ${profile.email}` : ""}`}
-        controls={<SensorSelector sensors={sensorOptions} activeIdNfc={nfcId} />}
+        controls={<SensorSelector sensors={sensorOptions} activeIdNfc={nfcId} basePath={basePath} />}
       />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
@@ -139,45 +149,49 @@ export function UserProfileView({
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
-          <RawValueTrendPanel chronological={chronological} />
+          <RawValueTrendPanel chronological={chronological} percentOnly={percentOnly} />
 
-          <RawResultsPanel results={results} idNfc={nfcId} />
+          {runDetailsByPostId && <RunsPanel sessions={sessions} runDetailsByPostId={runDetailsByPostId} />}
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_2fr]">
-            <Panel
-              title="Vs factory value"
-              subtitle={shoe ? `Baseline = ${shoe.factory_value} (factory value)` : "No factory value on record"}
-            >
-              {shoe && deviations.length > 0 ? (
-                <>
-                  <BaselineDeviationChart
-                    categories={deviations.map((d) => d.label)}
-                    values={deviations.map((d) => d.delta)}
-                    baselineLabel={`${shoe.factory_value} · factory`}
-                    height={200}
-                  />
-                  <div className="mt-2 flex flex-wrap items-center gap-3.5 text-[11px] text-text-faint">
-                    <span className="flex items-center gap-1.5">
-                      <span className="size-1.5 rounded-full bg-[#3987e5]" />
-                      Below factory value
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <span className="size-1.5 rounded-full bg-[#e66767]" />
-                      Above
-                    </span>
-                  </div>
-                  <p className="mt-2 text-[11px] leading-relaxed text-text-faint">
-                    Largest gap: {minDelta} · last scan: {lastDelta! > 0 ? `+${lastDelta}` : lastDelta}
+          <RawResultsPanel results={results} idNfc={nfcId} percentOnly={percentOnly} />
+
+          <div className={cn("grid grid-cols-1 gap-4", !percentOnly && "lg:grid-cols-[1fr_2fr]")}>
+            {!percentOnly && (
+              <Panel
+                title="Vs factory value"
+                subtitle={shoe ? `Baseline = ${shoe.factory_value} (factory value)` : "No factory value on record"}
+              >
+                {shoe && deviations.length > 0 ? (
+                  <>
+                    <BaselineDeviationChart
+                      categories={deviations.map((d) => d.label)}
+                      values={deviations.map((d) => d.delta)}
+                      baselineLabel={`${shoe.factory_value} · factory`}
+                      height={200}
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-3.5 text-[11px] text-text-faint">
+                      <span className="flex items-center gap-1.5">
+                        <span className="size-1.5 rounded-full bg-[#3987e5]" />
+                        Below factory value
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="size-1.5 rounded-full bg-[#e66767]" />
+                        Above
+                      </span>
+                    </div>
+                    <p className="mt-2 text-[11px] leading-relaxed text-text-faint">
+                      Largest gap: {minDelta} · last scan: {lastDelta! > 0 ? `+${lastDelta}` : lastDelta}
+                    </p>
+                  </>
+                ) : (
+                  <p className="py-10 text-center text-[13px] text-text-faint">
+                    {shoe
+                      ? "No scans for this sensor."
+                      : "This sensor has no shoe record (factory value) on file."}
                   </p>
-                </>
-              ) : (
-                <p className="py-10 text-center text-[13px] text-text-faint">
-                  {shoe
-                    ? "No scans for this sensor."
-                    : "This sensor has no shoe record (factory value) on file."}
-                </p>
-              )}
-            </Panel>
+                )}
+              </Panel>
+            )}
 
             <Panel
               title="Pre / post comparison by session"
@@ -187,8 +201,8 @@ export function UserProfileView({
                 <GroupedBarChart
                   categories={sessions.map((s) => formatShortDate(s.date))}
                   series={[
-                    { name: "Pre", data: sessions.map((s) => s.pre.value) },
-                    { name: "Post", data: sessions.map((s) => s.post.value) },
+                    { name: "Pre", data: sessions.map((s) => (percentOnly ? s.pre.percent : s.pre.value)) },
+                    { name: "Post", data: sessions.map((s) => (percentOnly ? s.post.percent : s.post.value)) },
                   ]}
                   height={200}
                 />

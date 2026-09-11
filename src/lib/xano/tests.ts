@@ -46,3 +46,22 @@ export async function updateTest(
 export async function deleteTest(token: string, id: number) {
   return xanoFetch<null>(`/admin/test/${id}`, { method: "DELETE", token });
 }
+
+// Enterprise-account equivalent — /client prefix, scoped to the caller's
+// org server-side from the token.
+export async function listClientTests(token: string) {
+  return xanoFetch<TestRecord[]>("/client/test", { token });
+}
+
+export async function safeListClientTests(
+  token: string,
+): Promise<{ tests: TestRecord[]; error: string | null }> {
+  try {
+    return { tests: await listClientTests(token), error: null };
+  } catch (err) {
+    return {
+      tests: [],
+      error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error.",
+    };
+  }
+}

@@ -61,7 +61,7 @@ async function OverviewContent() {
     );
   }
 
-  const brandAccounts = users.filter((user) => user.role === "user");
+  const brandAccounts = users.filter((user) => user.role === "brand");
 
   return (
     <OverviewView
