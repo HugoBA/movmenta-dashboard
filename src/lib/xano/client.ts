@@ -24,16 +24,17 @@ export async function xanoFetch<T>(
     throw new Error("NEXT_PUBLIC_XANO_BASE_URL is not set");
   }
 
-  const isRead = (init.method ?? "GET") === "GET";
   // File uploads (e.g. a brand logo) pass a FormData body — let fetch set
   // its own multipart Content-Type (with boundary) instead of JSON.
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const res = await fetch(`${XANO_BASE_URL}${path}`, {
-    // Reads are cached in Next's data cache; mutations always hit Xano.
-    // Server actions call revalidatePath after writes to keep this fresh —
-    // see e.g. features/tests/actions.ts.
-    ...(isRead ? { cache: "force-cache" as const } : {}),
+    // Data here can change outside this app entirely (a test device posting
+    // a result straight to Xano, someone editing a row in Xano's own UI) —
+    // no revalidatePath call in this codebase can know to invalidate that.
+    // Caching reads was tried and repeatedly went stale in exactly that way,
+    // so every request hits Xano fresh instead.
+    cache: "no-store",
     ...init,
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
