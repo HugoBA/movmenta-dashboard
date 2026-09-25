@@ -109,6 +109,7 @@ export function RawDataExplorer({ initialIdNfc }: { initialIdNfc?: string }) {
           data={data ?? []}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
+          onRowUpdated={refetch}
         />
       )}
     </div>

@@ -3,7 +3,7 @@
 import { forwardRef, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { TableLink } from "@/components/layout/table-link";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
-import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Pencil } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import type { ResultRecord } from "@/lib/xano/results";
@@ -11,6 +11,7 @@ import { formatDateTime } from "@/lib/formatting/date";
 import { formatDurationMinutes } from "@/lib/formatting/duration";
 import { SetColumnFilter } from "@/components/layout/column-filters";
 import type { CsvRow } from "@/lib/csv";
+import { EditResultDialog } from "./edit-result-dialog";
 
 function distinctValues(data: ResultRecord[], key: keyof ResultRecord): string[] {
   return [...new Set(data.map((row) => String(row[key] ?? "")))].sort();
@@ -39,8 +40,9 @@ export const ResultsTable = forwardRef<
     data: ResultRecord[];
     selectedIds: Set<number>;
     onSelectedIdsChange: (ids: Set<number>) => void;
+    onRowUpdated: () => void;
   }
->(function ResultsTable({ data, selectedIds, onSelectedIdsChange }, ref) {
+>(function ResultsTable({ data, selectedIds, onSelectedIdsChange, onRowUpdated }, ref) {
   const [sortKey, setSortKey] = useState<keyof ResultRecord>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [periodIncluded, setPeriodIncluded] = useState<Set<string> | null>(null);
@@ -269,12 +271,13 @@ export const ResultsTable = forwardRef<
                 </div>
               </th>
             ))}
+            <th style={{ width: "56px" }} className="border-b border-border-soft px-3 py-3" />
           </tr>
         </thead>
         <tbody>
           {paddingTop > 0 && (
             <tr>
-              <td style={{ height: paddingTop }} colSpan={columns.length + 1} />
+              <td style={{ height: paddingTop }} colSpan={columns.length + 2} />
             </tr>
           )}
           {virtualRows.map((virtualRow) => {
@@ -306,12 +309,27 @@ export const ResultsTable = forwardRef<
                     {col.render ? col.render(row) : String(row[col.key] ?? "—")}
                   </td>
                 ))}
+                <td className="px-3 py-2.5 text-right">
+                  <EditResultDialog
+                    result={row}
+                    onUpdated={onRowUpdated}
+                    trigger={
+                      <button
+                        type="button"
+                        title="Edit result"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                      >
+                        <Pencil />
+                      </button>
+                    }
+                  />
+                </td>
               </tr>
             );
           })}
           {paddingBottom > 0 && (
             <tr>
-              <td style={{ height: paddingBottom }} colSpan={columns.length + 1} />
+              <td style={{ height: paddingBottom }} colSpan={columns.length + 2} />
             </tr>
           )}
         </tbody>

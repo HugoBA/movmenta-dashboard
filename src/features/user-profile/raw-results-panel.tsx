@@ -1,9 +1,14 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { Panel } from "@/components/layout/panel";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/formatting/date";
 import { formatDurationMinutes } from "@/lib/formatting/duration";
 import { cn } from "@/lib/utils";
 import type { ResultRecord } from "@/lib/xano/results";
+import { EditResultDialog } from "@/features/raw-data/edit-result-dialog";
 
 function PeriodBadge({ period }: { period: string }) {
   const isPre = period?.toLowerCase() === "pre";
@@ -28,7 +33,11 @@ export function RawResultsPanel({
   idNfc: string;
   percentOnly?: boolean;
 }) {
+  const router = useRouter();
   const sorted = [...results].sort((a, b) => b.created_at - a.created_at);
+  // Editing exposes value/mm, so it's only offered where those columns are
+  // shown in the first place — admin, not the percent-only client view.
+  const canEdit = !percentOnly;
 
   return (
     <Panel title="Raw results" subtitle={`Full history for sensor ${idNfc}`}>
@@ -48,6 +57,7 @@ export function RawResultsPanel({
                 {!percentOnly && <TableHead className="text-right">mm</TableHead>}
                 <TableHead className="text-right">km</TableHead>
                 <TableHead className="text-right">Duration</TableHead>
+                {canEdit && <TableHead className="w-10" />}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -64,6 +74,23 @@ export function RawResultsPanel({
                   )}
                   <TableCell className="text-right tabular-nums">{row.km.toFixed(1)}</TableCell>
                   <TableCell className="text-right tabular-nums">{formatDurationMinutes(row.duration)}</TableCell>
+                  {canEdit && (
+                    <TableCell className="text-right">
+                      <EditResultDialog
+                        result={row}
+                        onUpdated={() => router.refresh()}
+                        trigger={
+                          <button
+                            type="button"
+                            title="Edit result"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
+                          >
+                            <Pencil />
+                          </button>
+                        }
+                      />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

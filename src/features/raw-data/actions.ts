@@ -1,7 +1,7 @@
 "use server";
 
 import { getSession } from "@/lib/auth/session";
-import { deleteResult } from "@/lib/xano/results";
+import { deleteResult, updateResult, type ResultRecord } from "@/lib/xano/results";
 import { XanoApiError, xanoErrorMessage } from "@/lib/xano/client";
 
 // Xano caps requests at 10 per 20s, shared across every call this token
@@ -39,4 +39,22 @@ export async function deleteResults(
   }
 
   return { deletedCount };
+}
+
+export async function updateResultAction(
+  id: number,
+  patch: Partial<Pick<ResultRecord, "value" | "mm" | "km" | "duration" | "percent">>,
+): Promise<{ error: string } | undefined> {
+  const session = await getSession();
+  if (!session || session.user.role !== "admin") {
+    return { error: "Unauthorized." };
+  }
+
+  try {
+    await updateResult(session.token, id, patch);
+  } catch (err) {
+    return { error: err instanceof XanoApiError ? xanoErrorMessage(err) : "Unexpected error." };
+  }
+
+  return undefined;
 }

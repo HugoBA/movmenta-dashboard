@@ -71,6 +71,14 @@ export async function deleteResult(token: string, id: number) {
   return xanoFetch<null>(`/admin/result/${id}`, { method: "DELETE", token });
 }
 
+export async function updateResult(
+  token: string,
+  id: number,
+  patch: Partial<Pick<ResultRecord, "value" | "mm" | "km" | "duration" | "percent">>,
+) {
+  return xanoFetch<ResultRecord>(`/admin/result/${id}`, { method: "PATCH", token, body: patch });
+}
+
 // Enterprise-account equivalent — /client prefix, scoped to the caller's
 // org server-side from the token.
 export async function listClientResults(token: string, filters: ResultsFilters) {
