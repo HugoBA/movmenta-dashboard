@@ -154,7 +154,7 @@ export function ShowMore({ remaining, onClick, pageSize }: { remaining: number; 
 // Lighter variant for dense tables: a colored dot and plain text.
 export function ResultText({ log }: { log: LineLog }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 text-sm whitespace-nowrap", log.ok ? "text-foreground" : "text-destructive")}>
+    <span className={cn("inline-flex items-center gap-1.5 text-sm whitespace-nowrap", log.ok ? "text-brand-good" : "text-destructive")}>
       <span className={cn("size-1.5 shrink-0 rounded-full", log.ok ? "bg-brand-good" : "bg-destructive")} />
       {log.ok ? "Success" : log.cause}
     </span>
