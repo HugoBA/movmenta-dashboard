@@ -88,7 +88,7 @@ export function AssignedShoesTable({
                         <button
                           type="button"
                           title="Edit shoe"
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
                         >
                           <Pencil />
                         </button>
@@ -99,7 +99,7 @@ export function AssignedShoesTable({
                       title="Remove from test"
                       disabled={isPending}
                       onClick={() => handleUnassign(testShoeId)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-destructive disabled:opacity-50 [&_svg]:size-4"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-destructive disabled:opacity-50 [&_svg]:size-4"
                     >
                       <X />
                     </button>

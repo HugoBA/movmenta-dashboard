@@ -1,7 +1,7 @@
 "use client";
 
 import ReactECharts from "echarts-for-react";
-import { categorical, chartChrome, ink } from "./palette";
+import { categorical, useChartColors } from "./palette";
 
 const belowColor = categorical[0]; // blue — reads below the baseline
 const aboveColor = categorical[7]; // red — reads above the baseline
@@ -19,6 +19,7 @@ export function BaselineDeviationChart({
   unit?: string;
   height?: number;
 }) {
+  const { ink, chartChrome } = useChartColors();
   const format = (v: number) => `${v > 0 ? "+" : ""}${v}${unit}`;
 
   return (

@@ -10,8 +10,8 @@ export default function Page() {
       <PageHeader
         eyebrow="ADMIN CONSOLE / TEAM"
         eyebrowTone="cyan"
-        title="SOLLO administrators"
-        subtitle="Manage login access for the internal Sollo team"
+        title="Team & partners"
+        subtitle="Login access for the Sollo team (admin) and production-line partners (prod)"
         controls={<CreateAdminDialog />}
       />
       <Suspense fallback={<ContentLoader />}>

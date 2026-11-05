@@ -1,3 +1,5 @@
+import { useTheme } from "@/lib/theme/use-theme";
+
 // Dark-mode chart palette — validated defaults from the dataviz reference
 // palette (references/palette.md). Swap these hexes for Sollo's brand hues
 // once confirmed; keep the same slot order (it's the CVD-safety mechanism).
@@ -12,6 +14,8 @@ export const categorical = [
   "#e66767", // 8 red
 ] as const;
 
+// Dark-theme chart chrome. Charts should read these through useChartColors()
+// so they follow the light/dark toggle; the constants stay for non-React use.
 export const ink = {
   primary: "#ffffff",
   secondary: "#c3c2b7",
@@ -30,3 +34,23 @@ export const status = {
   serious: "#ec835a",
   critical: "#d03b3b",
 };
+
+// Light theme — neutral greys ("orange en touche" palette).
+const lightInk = {
+  primary: "#1a1a1a",
+  secondary: "#444444",
+  muted: "#7a7a7a",
+};
+
+const lightChartChrome = {
+  surface: "#ffffff",
+  grid: "#eeeeee",
+  baseline: "#d9d9d9",
+};
+
+export function useChartColors() {
+  const { theme } = useTheme();
+  return theme === "light"
+    ? { ink: lightInk, chartChrome: lightChartChrome }
+    : { ink, chartChrome };
+}

@@ -16,7 +16,7 @@ function PeriodBadge({ period }: { period: string }) {
     <span
       className={cn(
         "inline-flex rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold",
-        isPre ? "bg-[#3987e5]/15 text-[#7ab4f2]" : "bg-[#d95926]/15 text-[#f0935f]",
+        isPre ? "bg-foreground/[0.06] text-muted-foreground dark:bg-[#3987e5]/15 dark:text-[#7ab4f2]" : "bg-[#d95926]/15 text-[#b8431a] dark:text-[#f0935f]",
       )}
     >
       {period || "—"}
@@ -83,7 +83,7 @@ export function RawResultsPanel({
                           <button
                             type="button"
                             title="Edit result"
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-3.5"
                           >
                             <Pencil />
                           </button>

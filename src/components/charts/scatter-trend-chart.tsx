@@ -1,7 +1,7 @@
 "use client";
 
 import ReactECharts from "echarts-for-react";
-import { categorical, chartChrome, ink } from "./palette";
+import { categorical, useChartColors } from "./palette";
 
 export interface ScatterGroupPoint {
   x: number;
@@ -58,6 +58,7 @@ export function ScatterTrendChart({
   yUnit?: string;
   height?: number;
 }) {
+  const { ink, chartChrome } = useChartColors();
   const series = groups.flatMap((group, index) => {
     const color = group.color ?? categorical[index % categorical.length];
     const scatter = {

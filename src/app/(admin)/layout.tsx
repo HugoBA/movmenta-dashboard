@@ -12,6 +12,9 @@ import {
   FlaskConical,
   Cpu,
   LineChart,
+  Route,
+  ScanLine,
+  PackageCheck,
 } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { getSession } from "@/lib/auth/session";
@@ -85,6 +88,26 @@ export default async function AdminLayout({
           title: "Sensor refs",
           href: "/admin/sensor-refs",
           icon: <Cpu />,
+        },
+      ],
+    },
+    {
+      label: "Production",
+      items: [
+        {
+          title: "Line overview",
+          href: "/admin/production/line",
+          icon: <Route />,
+        },
+        {
+          title: "BOL entries",
+          href: "/admin/production/bol",
+          icon: <ScanLine />,
+        },
+        {
+          title: "EOL entries",
+          href: "/admin/production/eol",
+          icon: <PackageCheck />,
         },
       ],
     },

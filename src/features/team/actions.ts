@@ -21,12 +21,12 @@ export async function createAdmin(
   try {
     await createDashboardUser(session.token, {
       username: input.username,
-      role: "admin",
+      role: input.role,
       active: true,
       password: input.password,
     });
   } catch {
-    return { error: "Could not create the admin account — the username may already be taken." };
+    return { error: "Could not create the account — the username may already be taken." };
   }
 
   revalidatePath("/admin/users");

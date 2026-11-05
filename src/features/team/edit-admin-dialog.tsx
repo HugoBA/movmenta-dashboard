@@ -73,7 +73,7 @@ export function EditAdminDialog({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-brand-cyan text-[#04262c] hover:bg-brand-cyan/90"
+              className="bg-brand-cyan text-white dark:text-[#04262c] hover:bg-brand-cyan/90"
             >
               Save changes
             </Button>

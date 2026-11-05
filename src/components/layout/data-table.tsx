@@ -23,7 +23,7 @@ export function DataTableHeadRow({ headers }: { headers: string[] }) {
 
 export function DataTableRow({ children }: { children: React.ReactNode }) {
   return (
-    <tr className="[&:not(:last-child)>td]:border-b [&>td]:border-border-soft hover:bg-white/[0.03]">
+    <tr className="[&:not(:last-child)>td]:border-b [&>td]:border-border-soft hover:bg-foreground/[0.03]">
       {children}
     </tr>
   );

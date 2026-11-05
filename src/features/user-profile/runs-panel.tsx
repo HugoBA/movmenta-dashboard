@@ -30,7 +30,7 @@ function WeatherTile({ weather, index }: { weather: RunWeather; index: number })
     >
       <div
         className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.04), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--foreground) 4%, transparent), transparent 70%)" }}
       />
       <p className="text-sm font-medium text-muted-foreground">Weather</p>
       <div className="mt-3 flex items-center gap-4">

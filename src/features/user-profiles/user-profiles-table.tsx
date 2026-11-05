@@ -294,7 +294,7 @@ export const UserProfilesTable = forwardRef<
               <tr
                 key={row.id}
                 className={cn(
-                  "border-b border-border-soft last:border-none hover:bg-white/[0.03]",
+                  "border-b border-border-soft last:border-none hover:bg-foreground/[0.03]",
                   isSelected && "bg-primary/[0.06]",
                 )}
               >

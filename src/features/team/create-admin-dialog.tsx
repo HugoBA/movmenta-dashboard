@@ -69,14 +69,16 @@ export function CreateAdminDialog() {
       <DialogTrigger asChild>
         <Pill type="button" tone="invert">
           <Plus />
-          Add admin
+          Add account
         </Pill>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New administrator</DialogTitle>
+          <DialogTitle>New account</DialogTitle>
           <DialogDescription>
-            Full access to all brands and data.
+            {watch("role") === "prod"
+              ? "Read-only access to the production line BOL and EOL entries."
+              : "Full access to all brands and data."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -105,13 +107,14 @@ export function CreateAdminDialog() {
               <FieldLabel htmlFor="role">Role</FieldLabel>
               <Select
                 value={watch("role")}
-                onValueChange={(v) => setValue("role", v as "admin")}
+                onValueChange={(v) => setValue("role", v as CreateAdminInput["role"])}
               >
                 <SelectTrigger id="role" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="admin">admin</SelectItem>
+                  <SelectItem value="admin">admin · Sollo team</SelectItem>
+                  <SelectItem value="prod">prod · production line</SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -134,7 +137,7 @@ export function CreateAdminDialog() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-brand-cyan text-[#04262c] hover:bg-brand-cyan/90"
+              className="bg-brand-cyan text-white dark:text-[#04262c] hover:bg-brand-cyan/90"
             >
               Create account
             </Button>

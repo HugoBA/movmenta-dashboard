@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, Moon, Sun } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +13,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { logout } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/theme/use-theme";
 import { SolloLogo } from "./sollo-logo";
 import type { NavGroup } from "./nav-item";
 
@@ -29,18 +30,18 @@ const variantStyles: Record<
   }
 > = {
   client: {
-    orgAvatar: "bg-gradient-to-br from-[#2b3040] to-[#1a1d26] border border-border",
+    orgAvatar: "bg-gradient-to-br from-[#ededed] to-[#e2e2e2] dark:from-[#2b3040] dark:to-[#1a1d26] border border-border",
     orgAvatarText: "text-brand-cyan",
-    activeBg: "bg-primary/15",
-    activeText: "text-primary",
+    activeBg: "bg-[var(--nav-active-bg)] dark:bg-primary/15",
+    activeText: "text-[var(--nav-active-fg)] dark:text-primary",
     activeBar: "bg-primary",
   },
   admin: {
     orgAvatar: "bg-gradient-to-br from-primary to-[#c73f10]",
     orgAvatarText: "text-[#1a0a04]",
-    activeBg: "bg-brand-cyan/12",
-    activeText: "text-brand-cyan",
-    activeBar: "bg-brand-cyan",
+    activeBg: "bg-[var(--nav-active-bg)] dark:bg-brand-cyan/12",
+    activeText: "text-[var(--nav-active-fg)] dark:text-brand-cyan",
+    activeBar: "bg-primary dark:bg-brand-cyan",
   },
 };
 
@@ -75,7 +76,7 @@ function SidebarNav({
                   onClick={onNavigate}
                   className={cn(
                     "relative flex items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-sm font-medium text-muted-foreground transition-colors",
-                    "hover:bg-card hover:text-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:opacity-85",
+                    "hover:bg-accent hover:text-foreground [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:opacity-85",
                     isActive && [styles.activeBg, styles.activeText, "[&_svg]:opacity-100"],
                   )}
                 >
@@ -105,10 +106,13 @@ function SidebarNav({
 }
 
 function OrgMenu({ org, styles }: { org: Org; styles: Styles }) {
+  const { theme, setTheme } = useTheme();
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center gap-2.5 rounded-lg bg-card px-2.5 py-2.5 text-left hover:bg-accent">
+        <button className="flex w-full items-center gap-2.5 rounded-lg bg-muted px-2.5 py-2.5 text-left hover:bg-accent">
           {org.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- brand logos are arbitrary uploaded Xano-hosted images
             <img
@@ -134,6 +138,10 @@ function OrgMenu({ org, styles }: { org: Org; styles: Styles }) {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top">
+        <DropdownMenuItem onSelect={() => setTheme(theme === "dark" ? "light" : "dark")}>
+          <ThemeIcon />
+          {theme === "dark" ? "Light theme" : "Dark theme"}
+        </DropdownMenuItem>
         <DropdownMenuItem>Profil</DropdownMenuItem>
         <DropdownMenuItem asChild>
           <form action={logout} className="w-full">
@@ -175,7 +183,7 @@ export function AppSidebar({
       </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="flex w-[248px] flex-col gap-0 p-5 py-7">
+        <SheetContent side="left" className="flex w-[248px] flex-col gap-0 bg-sidebar p-5 py-7">
           <SheetTitle className="sr-only">Menu</SheetTitle>
           <div className="flex items-center gap-2.5 px-1 pb-7">
             <SolloLogo className="h-6 w-auto text-foreground" />
@@ -192,7 +200,7 @@ export function AppSidebar({
         </SheetContent>
       </Sheet>
 
-      <aside className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[248px] lg:shrink-0 lg:flex-col border-r border-border-soft p-5 py-7">
+      <aside className="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[248px] lg:shrink-0 lg:flex-col border-r border-border-soft bg-sidebar p-5 py-7">
         <div className="flex items-center gap-2.5 px-1 pb-7">
           <SolloLogo className="h-6 w-auto text-foreground" />
         </div>

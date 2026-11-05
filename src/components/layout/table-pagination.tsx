@@ -24,7 +24,7 @@ export function TablePagination({
               className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-md border text-sm",
                 i === 0
-                  ? "border-border bg-white/5 text-foreground"
+                  ? "border-border bg-foreground/5 text-foreground"
                   : "border-border-soft text-text-faint",
               )}
             >

@@ -390,7 +390,7 @@ export const ShoesTable = forwardRef<
               <tr
                 key={row.id}
                 className={cn(
-                  "border-b border-border-soft last:border-none hover:bg-white/[0.03]",
+                  "border-b border-border-soft last:border-none hover:bg-foreground/[0.03]",
                   isSelected && "bg-primary/[0.06]",
                 )}
               >
@@ -427,7 +427,7 @@ export const ShoesTable = forwardRef<
                         <button
                           type="button"
                           title="Edit shoe"
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
                         >
                           <Pencil />
                         </button>

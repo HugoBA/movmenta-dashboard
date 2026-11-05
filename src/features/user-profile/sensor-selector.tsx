@@ -42,7 +42,7 @@ export function SensorSelector({
                 key={sensor.idNfc}
                 href={`${basePath}/user?nfcId=${encodeURIComponent(sensor.idNfc)}`}
                 className={cn(
-                  "flex items-center justify-between gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-none hover:bg-white/[0.03]",
+                  "flex items-center justify-between gap-3 border-b border-border-soft px-3.5 py-2.5 last:border-none hover:bg-foreground/[0.03]",
                   isActive && "bg-brand-cyan/12",
                 )}
               >

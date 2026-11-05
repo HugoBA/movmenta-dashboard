@@ -20,7 +20,8 @@ export type UpdateBrandInput = z.infer<typeof updateBrandSchema>;
 export const createAdminSchema = z.object({
   username: z.string().min(1, "Username requis"),
   password: z.string().min(8, "8 caractères minimum"),
-  role: z.literal("admin"),
+  // "prod" = production-line partner account (read-only BOL/EOL screens).
+  role: z.enum(["admin", "prod"]),
 });
 
 export type CreateAdminInput = z.infer<typeof createAdminSchema>;

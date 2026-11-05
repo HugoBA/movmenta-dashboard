@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import ReactECharts from "echarts-for-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { categorical, chartChrome, ink } from "@/components/charts/palette";
+import { categorical, useChartColors } from "@/components/charts/palette";
 import { cn } from "@/lib/utils";
 import { computeWearAttempts } from "./compute";
 import type { Tester } from "./compute";
@@ -27,6 +27,7 @@ interface TooltipParam {
 }
 
 export function PrePostChart({ testers }: { testers: Tester[] }) {
+  const { ink, chartChrome } = useChartColors();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [metric, setMetric] = useState<Metric>("percent");
   const unit = metric === "percent" ? "%" : " mm";
@@ -145,7 +146,7 @@ export function PrePostChart({ testers }: { testers: Tester[] }) {
       },
       series: [...lineSeries, ...postSeries],
     };
-  }, [selected, selectedIndex, testersWithAttempts, metric, unit]);
+  }, [selected, selectedIndex, testersWithAttempts, metric, unit, ink, chartChrome]);
 
   const onEvents = useMemo(
     () => ({

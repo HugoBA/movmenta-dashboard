@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { LayoutDashboard, UserRoundSearch, FlaskConical, LineChart, Footprints } from "lucide-react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { getSession } from "@/lib/auth/session";
-import { roleLabel } from "@/lib/permissions";
+import { homeRouteForRole, roleLabel } from "@/lib/permissions";
 import { initials } from "@/lib/formatting/initials";
 import type { NavGroup } from "@/components/layout/nav-item";
 
@@ -31,6 +31,8 @@ export default async function ClientLayout({
 }) {
   const session = await getSession();
   if (!session) redirect("/login");
+  // Production-line accounts only get the /prod screens.
+  if (session.user.role === "prod") redirect(homeRouteForRole(session.user.role));
 
   const displayName = session.user.brandName ?? session.user.username;
 

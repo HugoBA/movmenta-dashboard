@@ -149,7 +149,11 @@ export function UserProfileView({
 
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
         <div className="flex flex-col gap-4">
-          <RawValueTrendPanel chronological={chronological} percentOnly={percentOnly} />
+          <RawValueTrendPanel
+            chronological={chronological}
+            percentOnly={percentOnly}
+            factoryValue={shoe?.factory_value}
+          />
 
           {runDetailsByPostId && <RunsPanel sessions={sessions} runDetailsByPostId={runDetailsByPostId} />}
 

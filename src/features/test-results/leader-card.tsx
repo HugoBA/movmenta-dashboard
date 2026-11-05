@@ -28,7 +28,7 @@ export function LeaderCard({
     >
       <div
         className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full"
-        style={{ background: "radial-gradient(circle, rgba(255,255,255,0.05), transparent 70%)" }}
+        style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--foreground) 5%, transparent), transparent 70%)" }}
       />
       <div className="mb-4 flex items-center gap-2 text-primary [&_svg]:size-4">
         {icon}

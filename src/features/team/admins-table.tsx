@@ -23,13 +23,14 @@ export async function AdminsTable() {
   const { users, error } = session
     ? await safeListDashboardUsers(session.token)
     : { users: [], error: null };
-  const admins = users.filter((user) => user.role === "admin");
+  // Sollo staff and production-line partner accounts both live here.
+  const admins = users.filter((user) => user.role === "admin" || user.role === "prod");
 
   if (error) {
     return (
-      <Panel title="Administrators" delay={0.2}>
+      <Panel title="Accounts" delay={0.2}>
         <p className="text-sm text-destructive">
-          Couldn&apos;t load administrators from Xano: {error}
+          Couldn&apos;t load accounts from Xano: {error}
         </p>
       </Panel>
     );
@@ -37,19 +38,19 @@ export async function AdminsTable() {
 
   return (
     <Panel
-      title="Administrators"
+      title="Accounts"
       subtitle={`${admins.length} account${admins.length === 1 ? "" : "s"}`}
       delay={0.2}
       right={
         <div className="flex items-center gap-2">
-          <SearchInput placeholder="Search an admin…" />
+          <SearchInput placeholder="Search an account…" />
           <ExportCsvButton
             filename="admins.csv"
             data={{
               headers: ["User", "Role", "Created", "Active"],
               rows: admins.map((admin) => ({
                 User: admin.username,
-                Role: "admin",
+                Role: admin.role,
                 Created: formatDate(admin.created_at),
                 Active: admin.active ? "Yes" : "No",
               })),
@@ -73,7 +74,7 @@ export async function AdminsTable() {
                 </div>
               </DataTableCell>
               <DataTableCell>
-                <AccentTag>admin</AccentTag>
+                <AccentTag>{admin.role}</AccentTag>
               </DataTableCell>
               <DataTableCell>{formatDate(admin.created_at)}</DataTableCell>
               <DataTableCell>

@@ -188,7 +188,7 @@ export function TestsTable({
               <tr
                 key={row.id}
                 className={cn(
-                  "border-b border-border-soft last:border-none hover:bg-white/[0.03]",
+                  "border-b border-border-soft last:border-none hover:bg-foreground/[0.03]",
                   isSelected && "bg-primary/[0.06]",
                 )}
               >
@@ -215,7 +215,7 @@ export function TestsTable({
                     <Link
                       href={`${basePath}/test-results?testId=${row.id}`}
                       title="View results"
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
                     >
                       <LineChart />
                     </Link>
@@ -227,7 +227,7 @@ export function TestsTable({
                           <button
                             type="button"
                             title="Edit"
-                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4"
                           >
                             <Pencil />
                           </button>

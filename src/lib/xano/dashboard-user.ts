@@ -12,7 +12,7 @@ export interface DashboardUserRecord {
   id: number;
   created_at: number;
   username: string;
-  role: "admin" | "brand";
+  role: "admin" | "brand" | "prod";
   brand_id?: number | null;
   active: boolean;
   logo?: { url: string } | null;
@@ -42,7 +42,7 @@ export async function createDashboardUser(
   token: string,
   input: {
     username: string;
-    role: "admin" | "brand";
+    role: "admin" | "brand" | "prod";
     brand_id?: number;
     active: boolean;
     password: string;

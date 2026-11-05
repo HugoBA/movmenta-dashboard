@@ -1,7 +1,7 @@
 "use client";
 
 import ReactECharts from "echarts-for-react";
-import { categorical, chartChrome, ink } from "./palette";
+import { categorical, useChartColors } from "./palette";
 
 export function GroupedBarChart({
   categories,
@@ -14,6 +14,7 @@ export function GroupedBarChart({
   unit?: string;
   height?: number;
 }) {
+  const { ink, chartChrome } = useChartColors();
   const format = (v: number) => `${v}${unit}`;
 
   return (

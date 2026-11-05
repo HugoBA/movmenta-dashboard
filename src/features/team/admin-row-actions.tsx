@@ -12,7 +12,7 @@ import { EditAdminDialog } from "./edit-admin-dialog";
 import { DeleteAdminDialog } from "./delete-admin-dialog";
 
 const iconButtonClass =
-  "flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-white/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4";
+  "flex h-8 w-8 items-center justify-center rounded-lg border border-border bg-foreground/[0.015] text-muted-foreground hover:text-foreground [&_svg]:size-4";
 
 export function AdminRowActions({ admin }: { admin: { id: number; username: string } }) {
   const [editOpen, setEditOpen] = useState(false);

@@ -4,7 +4,7 @@ const toneClass = {
   ok: "bg-brand-good/12 text-brand-good",
   watch: "bg-brand-warn/12 text-brand-warn",
   critical: "bg-primary/14 text-primary",
-  off: "bg-white/5 text-text-faint",
+  off: "bg-foreground/5 text-text-faint",
 } as const;
 
 export function StatusBadge({
