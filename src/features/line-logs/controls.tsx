@@ -8,29 +8,62 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { LineLog } from "@/lib/xano/line-logs";
 import type { LiveStatus } from "./use-line-logs";
-import { formatDay, formatTimestamp, startOfDay } from "./format";
+import { formatRange, formatTimestamp, singleDay, startOfDay, type DayRange } from "./format";
 
-export function DayFilter({ day, onChange }: { day: Date | undefined; onChange: (day: Date | undefined) => void }) {
+// One click picks that date; a second click makes it a range from the first.
+export function DateFilter({
+  range,
+  onChange,
+}: {
+  range: DayRange | undefined;
+  onChange: (range: DayRange | undefined) => void;
+}) {
   const [open, setOpen] = useState(false);
-  const pick = (d: Date | undefined) => {
-    onChange(d ? startOfDay(d) : undefined);
-    setOpen(false);
+  const [anchor, setAnchor] = useState<Date | null>(null);
+
+  const setOpenState = (next: boolean) => {
+    setOpen(next);
+    setAnchor(null);
   };
+  const pickDay = (clicked: Date) => {
+    const d = startOfDay(clicked);
+    if (!anchor) {
+      setAnchor(d);
+      onChange({ from: d, to: d });
+      return;
+    }
+    onChange(d < anchor ? { from: d, to: anchor } : { from: anchor, to: d });
+    setOpenState(false);
+  };
+  const pickPreset = (next: DayRange | undefined) => {
+    onChange(next);
+    setOpenState(false);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpenState}>
       <PopoverTrigger asChild>
         <Button variant="outline" className="justify-start font-normal">
           <CalendarIcon className="size-4" />
-          {day ? formatDay(day) : "All days"}
+          {range ? formatRange(range) : "All days"}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={day} onSelect={(d) => d && pick(d)} disabled={{ after: new Date() }} />
+        <Calendar
+          mode="range"
+          selected={range}
+          onSelect={(_, clicked) => pickDay(clicked)}
+          defaultMonth={range?.to}
+          disabled={{ after: new Date() }}
+        />
+        <p className="px-3 pb-2 text-xs text-text-faint">
+          {anchor ? "Pick the end date for a range" : "Pick a day, or two for a range"}
+        </p>
         <div className="flex justify-between gap-2 border-t border-border-soft p-2">
-          <Button variant="ghost" size="sm" onClick={() => pick(new Date())}>
+          <Button variant="ghost" size="sm" onClick={() => pickPreset(singleDay(new Date()))}>
             Today
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => pick(undefined)}>
+          <Button variant="ghost" size="sm" onClick={() => pickPreset(undefined)}>
             All days
           </Button>
         </div>

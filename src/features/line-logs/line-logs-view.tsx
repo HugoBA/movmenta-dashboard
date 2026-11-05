@@ -13,8 +13,8 @@ import { latestBySensor, type SensorLatest } from "@/lib/line-logs/latest";
 import type { Line } from "@/lib/xano/line-logs";
 import { useLineLogs } from "./use-line-logs";
 import { useFrozenRows } from "./use-frozen-rows";
-import { dayBounds, formatDay, formatTimestamp, formatWhen, isoDay, startOfDay } from "./format";
-import { DayFilter, LiveIndicator, NewEntriesBanner, ResultBadge, ScansCount, ShowMore } from "./controls";
+import { dayBounds, formatRange, formatTimestamp, formatWhen, isoRange, singleDay, type DayRange } from "./format";
+import { DateFilter, LiveIndicator, NewEntriesBanner, ResultBadge, ScansCount, ShowMore } from "./controls";
 
 type StatusFilter = "all" | "success" | "error";
 
@@ -35,13 +35,13 @@ export function LineLogsView({
   const showEpc = line === "eol";
   const valueLabel = line === "eol" ? "Factory value" : "Raw value";
 
-  const [day, setDay] = useState<Date | undefined>(() => startOfDay(new Date()));
+  const [range, setRange] = useState<DayRange | undefined>(() => singleDay(new Date()));
   const [sensorQuery, setSensorQuery] = useState("");
   const [epcQuery, setEpcQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { from, to } = dayBounds(day);
+  const { from, to } = dayBounds(range);
   const { rows, status, error, lastUpdated, initialMaxId } = useLineLogs(line, from, to);
 
   const sensors = useMemo<Row[]>(
@@ -53,27 +53,36 @@ export function LineLogsView({
   );
 
   // Filters apply to each sensor's latest scan.
-  const filtered = useMemo(() => {
+  const searched = useMemo(() => {
     const sensor = sensorQuery.trim().toLowerCase();
     const epc = epcQuery.trim().toLowerCase();
     return sensors.filter(
       ({ latest }) =>
         (!sensor || latest.sensorId.toLowerCase().includes(sensor)) &&
-        (!epc || (latest.epc ?? "").toLowerCase().includes(epc)) &&
-        (statusFilter === "all" || (statusFilter === "success" ? latest.ok : !latest.ok)),
+        (!epc || (latest.epc ?? "").toLowerCase().includes(epc)),
     );
-  }, [sensors, sensorQuery, epcQuery, statusFilter]);
+  }, [sensors, sensorQuery, epcQuery]);
 
+  const filtered = useMemo(
+    () =>
+      statusFilter === "all"
+        ? searched
+        : searched.filter(({ latest }) => (statusFilter === "success" ? latest.ok : !latest.ok)),
+    [searched, statusFilter],
+  );
+
+  // Ignores the status filter, so the errors tile keeps the full picture when
+  // it's used as that filter.
   const counts = useMemo(() => {
-    const successes = filtered.filter((s) => s.latest.ok).length;
+    const successes = searched.filter((s) => s.latest.ok).length;
     return {
-      scans: filtered.reduce((n, s) => n + s.scans, 0),
-      shoes: filtered.length,
+      scans: searched.reduce((n, s) => n + s.scans, 0),
+      shoes: searched.length,
       successes,
-      errors: filtered.length - successes,
-      rate: filtered.length ? (successes / filtered.length) * 100 : null,
+      errors: searched.length - successes,
+      rate: searched.length ? (successes / searched.length) * 100 : null,
     };
-  }, [filtered]);
+  }, [searched]);
 
   const { tableTopRef, shown, pendingCount, release } = useFrozenRows(filtered);
 
@@ -97,10 +106,10 @@ export function LineLogsView({
     <div className="animate-rise flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
-          <DayFilter
-            day={day}
-            onChange={(d) => {
-              setDay(d);
+          <DateFilter
+            range={range}
+            onChange={(r) => {
+              setRange(r);
               setLimit(PAGE_SIZE);
             }}
           />
@@ -145,16 +154,16 @@ export function LineLogsView({
             </Button>
           )}
         </div>
-        <ExportCsvButton filename={`${line}-entries${day ? `-${isoDay(day)}` : ""}.csv`} data={exportData} />
+        <ExportCsvButton filename={`${line}-entries${range ? `-${isoRange(range)}` : ""}.csv`} data={exportData} />
       </div>
 
       <LiveIndicator status={status} lastUpdated={lastUpdated} />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <StatTile
           label="Scans"
           value={counts.scans.toLocaleString("en-GB")}
-          delta={{ tone: "neutral", value: day ? formatDay(day) : "all days" }}
+          delta={{ tone: "neutral", value: range ? formatRange(range) : "all days" }}
           index={0}
         />
         <StatTile
@@ -164,14 +173,21 @@ export function LineLogsView({
           index={1}
         />
         <StatTile
-          label="Success / errors"
-          value={`${counts.successes.toLocaleString("en-GB")} / ${counts.errors.toLocaleString("en-GB")}`}
-          delta={
-            counts.errors > 0
-              ? { tone: "down", value: `${counts.errors} shoes in error` }
-              : { tone: "up", value: "no errors" }
-          }
+          label="Success"
+          value={counts.successes.toLocaleString("en-GB")}
+          valueClassName="text-brand-good"
+          delta={{ tone: "neutral", value: "shoes, latest scan" }}
           index={2}
+        />
+        <StatTile
+          label="Errors"
+          value={counts.errors.toLocaleString("en-GB")}
+          valueClassName="text-destructive"
+          delta={counts.errors > 0 ? { tone: "down", value: "shoes in error" } : { tone: "up", value: "no errors" }}
+          index={3}
+          onClick={() => setStatusFilter((f) => (f === "error" ? "all" : "error"))}
+          active={statusFilter === "error"}
+          title={statusFilter === "error" ? "Show all shoes" : "Show only shoes in error"}
         />
         <StatTile
           label="Success rate"
@@ -182,7 +198,7 @@ export function LineLogsView({
               ? { tone: "neutral", value: "no entries" }
               : { tone: counts.rate >= 95 ? "up" : counts.rate >= 80 ? "warn" : "down", value: "of shoes" }
           }
-          index={3}
+          index={4}
         />
       </div>
 
@@ -218,7 +234,7 @@ export function LineLogsView({
                   )}
                 >
                   <td className="py-2.5 pr-3 font-mono text-xs text-text-faint tabular-nums">{r.id}</td>
-                  <td className="py-2.5 pr-3 whitespace-nowrap tabular-nums">{formatWhen(r.createdAt, day)}</td>
+                  <td className="py-2.5 pr-3 whitespace-nowrap tabular-nums">{formatWhen(r.createdAt, range)}</td>
                   <td className="py-2.5 pr-3 font-mono text-xs whitespace-nowrap">
                     <Link
                       href={`${tracePath}?sensor=${encodeURIComponent(r.sensorId)}`}
@@ -243,7 +259,7 @@ export function LineLogsView({
         {status !== "loading" && shown.length === 0 && (
           <p className="py-10 text-center text-sm text-text-faint">
             {rows.length === 0
-              ? `No ${line.toUpperCase()} entries ${day ? `on ${formatDay(day)}` : "yet"}.`
+              ? `No ${line.toUpperCase()} entries ${range ? `for ${formatRange(range)}` : "yet"}.`
               : "No entries match these filters."}
           </p>
         )}

@@ -15,6 +15,10 @@ export function StatTile({
   unit,
   delta,
   index = 0,
+  valueClassName,
+  onClick,
+  active = false,
+  title,
 }: {
   label: string;
   value: string;
@@ -25,12 +29,17 @@ export function StatTile({
     context?: string;
   };
   index?: number;
+  valueClassName?: string;
+  // Makes the tile a toggle button; `active` shows that it's on.
+  onClick?: () => void;
+  active?: boolean;
+  title?: string;
 }) {
-  return (
-    <div
-      className="animate-rise relative overflow-hidden rounded-2xl border border-border-soft bg-card p-5"
-      style={{ animationDelay: `${0.05 + index * 0.1}s` }}
-    >
+  const className =
+    "animate-rise relative overflow-hidden rounded-2xl border border-border-soft bg-card p-5";
+  const style = { animationDelay: `${0.05 + index * 0.1}s` };
+  const content = (
+    <>
       <div
         className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full"
         style={{
@@ -39,7 +48,12 @@ export function StatTile({
         }}
       />
       <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="mt-3 font-heading text-[34px] font-semibold tracking-tight">
+      <p
+        className={cn(
+          "mt-3 font-heading text-[34px] font-semibold tracking-tight",
+          valueClassName,
+        )}
+      >
         {value}
         {unit && (
           <span className="ml-1 text-base font-medium text-text-faint">
@@ -63,6 +77,30 @@ export function StatTile({
           )}
         </p>
       )}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={active}
+        title={title}
+        className={cn(
+          className,
+          "w-full cursor-pointer text-left transition-colors hover:border-foreground/25 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          active && "border-primary ring-1 ring-primary/40 hover:border-primary",
+        )}
+        style={style}
+      >
+        {content}
+      </button>
+    );
+  }
+  return (
+    <div className={className} style={style}>
+      {content}
     </div>
   );
 }

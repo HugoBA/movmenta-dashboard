@@ -21,14 +21,15 @@ import { useSensorLookup } from "./use-sensor-lookup";
 import { useFrozenRows } from "./use-frozen-rows";
 import {
   dayBounds,
-  formatDay,
+  formatRange,
   formatTimestamp,
   formatWhen,
-  isoDay,
-  startOfDay,
+  isoRange,
+  singleDay,
+  type DayRange,
 } from "./format";
 import {
-  DayFilter,
+  DateFilter,
   LiveIndicator,
   NewEntriesBanner,
   ResultText,
@@ -101,20 +102,20 @@ function combinedStatus(a: LiveStatus, b: LiveStatus): LiveStatus {
 // two scans happened on different days.
 export function TraceView({ initialSensor }: { initialSensor?: string }) {
   // Coming from a "trace this shoe" link: search every day for that sensor.
-  const [day, setDay] = useState<Date | undefined>(() =>
-    initialSensor ? undefined : startOfDay(new Date()),
+  const [range, setRange] = useState<DayRange | undefined>(() =>
+    initialSensor ? undefined : singleDay(new Date()),
   );
   const [sensorQuery, setSensorQuery] = useState(initialSensor ?? "");
   const [epcQuery, setEpcQuery] = useState("");
   const [stageFilter, setStageFilter] = useState<StageFilter>("all");
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { from, to } = dayBounds(day);
+  const { from, to } = dayBounds(range);
   const bolDay = useLineLogs("bol", from, to);
   const eolDay = useLineLogs("eol", from, to);
 
-  // For a single day, shoes active that day may have their other stage on
-  // another day: look those sensors up across all dates.
+  // Shoes active in the picked dates may have their other stage outside them:
+  // look those sensors up across all dates.
   const bolDaySensors = useMemo(
     () => new Set(bolDay.rows.map((r) => r.sensorId)),
     [bolDay.rows],
@@ -131,15 +132,15 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
     () => [...bolDaySensors].filter((id) => !eolDaySensors.has(id)),
     [eolDaySensors, bolDaySensors],
   );
-  const bolLookup = useSensorLookup("bol", needBol, day !== undefined);
-  const eolLookup = useSensorLookup("eol", needEol, day !== undefined);
+  const bolLookup = useSensorLookup("bol", needBol, range !== undefined);
+  const eolLookup = useSensorLookup("eol", needEol, range !== undefined);
 
   const rows = useMemo<TraceRow[]>(() => {
     const bolLatest = latestBySensor(
-      day ? unionById(bolDay.rows, bolLookup.rows) : bolDay.rows,
+      range ? unionById(bolDay.rows, bolLookup.rows) : bolDay.rows,
     );
     const eolLatest = latestBySensor(
-      day ? unionById(eolDay.rows, eolLookup.rows) : eolDay.rows,
+      range ? unionById(eolDay.rows, eolLookup.rows) : eolDay.rows,
     );
     const sensorIds = new Set([...bolDaySensors, ...eolDaySensors]);
     return [...sensorIds]
@@ -151,7 +152,7 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
           bol,
           eol,
           bolChecked:
-            !day ||
+            !range ||
             bolDaySensors.has(sensorId) ||
             bolLookup.checked.has(sensorId),
           stage: stageOf(bol, eol),
@@ -163,7 +164,7 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
       })
       .sort((a, b) => b.activityAt - a.activityAt);
   }, [
-    day,
+    range,
     bolDay.rows,
     eolDay.rows,
     bolLookup,
@@ -172,34 +173,44 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
     eolDaySensors,
   ]);
 
-  const filtered = useMemo(() => {
+  const searched = useMemo(() => {
     const sensor = sensorQuery.trim().toLowerCase();
     const epc = epcQuery.trim().toLowerCase();
     return rows.filter(
       (r) =>
         (!sensor || r.sensorId.toLowerCase().includes(sensor)) &&
-        (!epc || (r.eol?.latest.epc ?? "").toLowerCase().includes(epc)) &&
-        (stageFilter === "all" ||
+        (!epc || (r.eol?.latest.epc ?? "").toLowerCase().includes(epc)),
+    );
+  }, [rows, sensorQuery, epcQuery]);
+
+  const filtered = useMemo(
+    () =>
+      searched.filter(
+        (r) =>
+          stageFilter === "all" ||
           (stageFilter === "errors"
             ? r.stage === "eol_failed" || r.stage === "bol_failed"
-            : r.stage === stageFilter)),
-    );
-  }, [rows, sensorQuery, epcQuery, stageFilter]);
+            : r.stage === stageFilter),
+      ),
+    [searched, stageFilter],
+  );
 
+  // Ignores the stage filter, so the errors tile keeps the full picture when
+  // it's used as that filter.
   const counts = useMemo(() => {
     const by = (stage: Stage) =>
-      filtered.filter((r) => r.stage === stage).length;
-    const atEol = filtered.filter((r) => r.eol).length;
-    const passed = filtered.filter((r) => r.eol?.latest.ok).length;
+      searched.filter((r) => r.stage === stage).length;
+    const atEol = searched.filter((r) => r.eol).length;
+    const passed = searched.filter((r) => r.eol?.latest.ok).length;
     return {
-      shoes: filtered.length,
+      shoes: searched.length,
       passed,
       awaiting: by("awaiting_eol"),
       bolFailed: by("bol_failed"),
       eolFailed: by("eol_failed"),
       eolRate: atEol ? (passed / atEol) * 100 : null,
     };
-  }, [filtered]);
+  }, [searched]);
 
   const { tableTopRef, shown, pendingCount, release } = useFrozenRows(filtered);
 
@@ -256,10 +267,10 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
     <div className="animate-rise flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2.5">
-          <DayFilter
-            day={day}
-            onChange={(d) => {
-              setDay(d);
+          <DateFilter
+            range={range}
+            onChange={(r) => {
+              setRange(r);
               setLimit(PAGE_SIZE);
             }}
           />
@@ -310,7 +321,7 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
           )}
         </div>
         <ExportCsvButton
-          filename={`line-trace${day ? `-${isoDay(day)}` : ""}.csv`}
+          filename={`line-trace${range ? `-${isoRange(range)}` : ""}.csv`}
           data={exportData}
         />
       </div>
@@ -327,17 +338,31 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
         <StatTile
           label="Passed EOL"
           value={counts.passed.toLocaleString("en-GB")}
-          delta={{ tone: "neutral", value: day ? formatDay(day) : "all days" }}
+          valueClassName="text-brand-good"
+          delta={{
+            tone: "neutral",
+            value: range ? formatRange(range) : "all days",
+          }}
           index={1}
         />
         <StatTile
           label="Errors"
           value={(counts.bolFailed + counts.eolFailed).toLocaleString("en-GB")}
+          valueClassName="text-destructive"
           delta={{
             tone: counts.bolFailed + counts.eolFailed > 0 ? "down" : "up",
             value: `BOL ${counts.bolFailed} · EOL ${counts.eolFailed}`,
           }}
           index={2}
+          onClick={() =>
+            setStageFilter((f) => (f === "errors" ? "all" : "errors"))
+          }
+          active={stageFilter === "errors"}
+          title={
+            stageFilter === "errors"
+              ? "Show all shoes"
+              : "Show only shoes in error"
+          }
         />
         <StatTile
           label="EOL success rate"
@@ -452,7 +477,7 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
                     <StageCells
                       log={r.bol?.latest}
                       scans={r.bol?.scans ?? 0}
-                      day={day}
+                      range={range}
                       empty={r.bolChecked ? "—" : "Looking up…"}
                       cols={2}
                     />
@@ -464,7 +489,7 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
                             "py-2.5 pr-3 whitespace-nowrap tabular-nums"
                           }
                         >
-                          {formatWhen(r.eol.latest.createdAt, day)}
+                          {formatWhen(r.eol.latest.createdAt, range)}
                           <ScansCount scans={r.eol.scans} />
                         </td>
                         <td className="py-2.5 pr-3 font-mono text-xs text-muted-foreground">
@@ -492,7 +517,7 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
         {status !== "loading" && shown.length === 0 && (
           <p className="py-10 text-center text-sm text-text-faint">
             {rows.length === 0
-              ? `No line activity ${day ? `on ${formatDay(day)}` : "yet"}.`
+              ? `No line activity ${range ? `for ${formatRange(range)}` : "yet"}.`
               : "No shoes match these filters."}
           </p>
         )}
@@ -515,13 +540,13 @@ export function TraceView({ initialSensor }: { initialSensor?: string }) {
 function StageCells({
   log,
   scans,
-  day,
+  range,
   empty,
   cols,
 }: {
   log: LineLog | undefined;
   scans: number;
-  day: Date | undefined;
+  range: DayRange | undefined;
   empty: string;
   cols: number;
 }) {
@@ -535,7 +560,7 @@ function StageCells({
   return (
     <>
       <td className={"py-2.5 pr-3 whitespace-nowrap tabular-nums"}>
-        {formatWhen(log.createdAt, day)}
+        {formatWhen(log.createdAt, range)}
         <ScansCount scans={scans} />
       </td>
       <td className={"py-2.5 pr-3 tabular-nums"}>{log.value ?? "—"}</td>
